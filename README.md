@@ -1,6 +1,6 @@
 # Por que esse projeto?
 
-Este projeto foi construido para testar minhas habilidades com a programação em fullstack
+Este projeto foi construido para testar minhas habilidades com a programação em fullstack e me ajudar com as minhas finanças e investimentos.
 
 ## Por que React?
 
