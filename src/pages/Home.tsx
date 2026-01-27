@@ -11,7 +11,9 @@ export default function Home() {
             <div className="bg-sky-200 aspect-square rounded-lg shadow-sm">
               <div>
                 <h1 className="flex-1 p-6">About</h1>
-                <h3></h3>
+                <h3 className="flex-1 p-6">
+                  The site was developed to train my dev skills
+                </h3>
               </div>
             </div>
 
