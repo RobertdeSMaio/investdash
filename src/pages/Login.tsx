@@ -1,12 +1,49 @@
+import axios from "axios";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+
 export default function Login() {
+  const validationSchema = Yup.object({
+    email: Yup.string()
+      .email("E-mail inválido")
+      .required("O e-mail é obrigatório"),
+    password: Yup.string()
+      .min(6, "A senha deve ter pelo mens 6 caracteres")
+      .required("A senha é obrigatória"),
+  });
+
+  /* Validação e post do formulário do login*/
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      console.log("Dados do login:", values);
+      try {
+        const response = await axios.post(
+          "http://localhost:3000/login",
+          values,
+        );
+
+        localStorage.setItem("token", response.data.token);
+      } catch (error) {
+        alert("E-mail ou senha incorretos.");
+      }
+      /*alert("Login realizado com sucesso! Verifique o console.");*/
+    },
+  });
+
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4 shadow-md rounded-lg">
       <div className="bg-sky-200 p-8 rounded-xl shadow-lg w-full max-w-md">
         <h1 className="text-2xl font-bold text-sky-600 mb-6 text-center">
           Login
         </h1>
 
-        <form className="flex flex-col gap-4">
+        <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
+          {/* Campo E-mail */}
           <div className="flex flex-col gap-1">
             <label
               htmlFor="email"
@@ -17,23 +54,38 @@ export default function Login() {
             <input
               type="email"
               id="email"
-              name="email"
-              required
-              className="p-2 border border-sky-500 rounded-md focus:ring-2 focus:ring-sky-200 outline-none"
+              {...formik.getFieldProps("email")}
+              className={`p-2 border rounded-lg outline-none shadow-md ${
+                formik.touched.email && formik.errors.email
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
             />
+            {formik.touched.email && formik.errors.email && (
+              <span className="text-red-500 text-xs">
+                {formik.errors.email}
+              </span>
+            )}
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor="pass" className="text-sm font-medium text-gray-700">
-              Senha
-            </label>
+          {/* Campo Senha */}
+          <div className="flex flex-col gap-1 shadow-md rounded-lg">
+            <label htmlFor="password">Senha</label>
             <input
               type="password"
-              id="pass"
-              name="password"
-              required
-              className="p-2 border border-sky-500 rounded-md focus:ring-2 focus:ring-sky-200 outline-none"
+              id="password"
+              {...formik.getFieldProps("password")}
+              className={`p-2 border rounded-md outline-none ${
+                formik.touched.password && formik.errors.password
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
             />
+            {formik.touched.password && formik.errors.password && (
+              <span className="text-red-500 text-xs">
+                {formik.errors.password}
+              </span>
+            )}
           </div>
 
           <button
