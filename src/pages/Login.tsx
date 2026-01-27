@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useFormik } from "formik";
+import { Link } from "react-router-dom";
 import * as Yup from "yup";
 
 export default function Login() {
@@ -87,13 +88,20 @@ export default function Login() {
               </span>
             )}
           </div>
-
-          <button
-            type="submit"
-            className="mt-2 bg-sky-500 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors"
-          >
-            Entrar
-          </button>
+          <div className="space-x-59">
+            <button
+              type="submit"
+              className="mt-2 bg-sky-500 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors"
+            >
+              Entrar
+            </button>
+            <Link
+              to="/register"
+              className="mt-2 bg-sky-500 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors"
+            >
+              Registrar
+            </Link>
+          </div>
         </form>
       </div>
     </main>
