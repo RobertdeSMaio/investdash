@@ -14,9 +14,12 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.0",
-    "axios": "^1.13.3",
+    "apexcharts": "^5.3.6",
+    "axios": "^1.13.4",
+    "build": "^0.1.4",
     "formik": "^2.4.6",
     "react": "^19.0.0",
+    "react-apexcharts": "^1.9.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.13.0",
     "tailwindcss": "^4.0.0",

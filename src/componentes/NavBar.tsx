@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export default function NavBar() {
   return (
-    <header className="w-full h-13 p-4 shadow-md flex justify-between items-center bg-sky-100 rounded-[10px]">
+    <header className="w-full h-13 p-4 shadow-md flex justify-between items-center bg-sky-200 rounded-[10px]">
       <h3 className="font-bold">InvesterDash</h3>
       <div className="flex gap-6 items-center">
         <Link to="/Home" className="hover:text-sky-100 transition-colors">
