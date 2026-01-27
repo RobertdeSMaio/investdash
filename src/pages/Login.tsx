@@ -1,9 +1,12 @@
 import axios from "axios";
 import { useFormik } from "formik";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import * as Yup from "yup";
 
 export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
+
   const validationSchema = Yup.object({
     email: Yup.string()
       .email("E-mail inválido")
@@ -70,18 +73,36 @@ export default function Login() {
           </div>
 
           {/* Campo Senha */}
-          <div className="flex flex-col gap-1 shadow-md rounded-lg">
+          <div className="flex flex-col gap-1 mb-6">
             <label htmlFor="password">Senha</label>
-            <input
-              type="password"
-              id="password"
-              {...formik.getFieldProps("password")}
-              className={`p-2 border rounded-md outline-none ${
-                formik.touched.password && formik.errors.password
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-            />
+
+            {/* O container do input e do botão precisa ser relative e NÃO ter flex-col */}
+            <div className="relative flex items-center">
+              <input
+                id="password"
+                {...formik.getFieldProps("password")}
+                // O type vem DEPOIS do getFieldProps para garantir que o estado mande
+                type={showPassword ? "text" : "password"}
+                className={`w-full p-2 border rounded-md outline-none pr-12 ${
+                  formik.touched.password && formik.errors.password
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  console.log("Botão clicado! Estado anterior:", showPassword);
+                  setShowPassword(!showPassword);
+                }}
+                className="absolute right-3 z-10 p-1 text-xs font-bold text-sky-600 hover:text-sky-800"
+                style={{ top: "50%", transform: "translateY(-50%)" }}
+              >
+                {showPassword ? "Ocultar" : "Ver"}
+              </button>
+            </div>
+
             {formik.touched.password && formik.errors.password && (
               <span className="text-red-500 text-xs">
                 {formik.errors.password}
