@@ -43,7 +43,7 @@ export default function Home() {
                   Primeiro milhão
                 </div>
               </Link>
-              <Link to="/Pocent">
+              <Link to="/Porcent">
                 <div className="bg-sky-100 p-8 flex-1 m-8 rounded-lg shadow-sm hover:bg-sky-300 transition-colors">
                   Porcentagem
                 </div>
