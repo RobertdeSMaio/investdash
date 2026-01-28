@@ -15,7 +15,8 @@ export default function SimpleJ() {
   const [resumo, setResumo] = useState({ final: 0, juros: 0, investido: 0 });
 
   const calcularSimples = () => {
-    const mesesTotais = tipoPeriodo === "ANOS" ? periodo * 12 : periodo;
+    const mesesTotais =
+      tipoPeriodo === "ANOS" ? periodo * 12 : periodo; /*TODO ajustar periodo*/
     const taxaMensal = taxa / 100;
 
     // Em juros simples, o valor do juro é fixo por mês: J = Principal * taxa
