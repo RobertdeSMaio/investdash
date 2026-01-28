@@ -1,3 +1,10 @@
+import NavBar from "../componentes/NavBar";
+
 export default function Invest() {
-  return <div></div>;
+  return (
+    <>
+      <NavBar />
+      <div></div>
+    </>
+  );
 }
