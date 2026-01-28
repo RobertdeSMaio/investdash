@@ -29,23 +29,13 @@ export default function Home() {
               <h1 className="p-6">Calculators</h1>
               <h3></h3>
               <Link to="/ComposeJ">
-                <div className="bg-sky-100 p-8 flex-1 m-8 rounded-lg shadow-sm hover:bg-sky-300 transition-colors">
+                <div className="bg-sky-100 p-20 flex-1 m-8 rounded-lg shadow-sm hover:bg-sky-300 transition-colors">
                   Juros Compostos
                 </div>
               </Link>
               <Link to="/SimpleJ">
-                <div className="bg-sky-100 p-8 flex-1 m-8 rounded-lg shadow-sm hover:bg-sky-300 transition-colors">
+                <div className="bg-sky-100 p-20 flex-1 m-8 rounded-lg shadow-sm hover:bg-sky-300 transition-colors">
                   Juros Simples
-                </div>
-              </Link>
-              <Link to="/M1Calc">
-                <div className="bg-sky-100 p-8 flex-1 m-8 rounded-lg shadow-sm hover:bg-sky-300 transition-colors">
-                  Primeiro milhão
-                </div>
-              </Link>
-              <Link to="/Porcent">
-                <div className="bg-sky-100 p-8 flex-1 m-8 rounded-lg shadow-sm hover:bg-sky-300 transition-colors">
-                  Porcentagem
                 </div>
               </Link>
             </div>

@@ -80,7 +80,7 @@ export default function SimuladorInvestimentoFinal() {
       <NavBar />
       <div className="bg-gray-100 min-h-screen p-6 space-y-6">
         {/* 1. INPUTS (Display idêntico à imagem) */}
-        <div className="max-w-6xl mx-auto bg-sky-200 p-6 rounded-lg shadow-md border-t-4">
+        <div className="max-w-6xl mx-auto bg-sky-200 p-6 rounded-lg shadow-md ">
           <h2 className="text-xs font-bold uppercase mb-6 flex items-center gap-2">
             Simulador de Juros Compostos
           </h2>
