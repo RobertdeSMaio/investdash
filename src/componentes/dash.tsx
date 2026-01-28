@@ -39,13 +39,19 @@ export default function Dash() {
   };
 
   return (
-    <div className="p-2 bg-white m-10 shadow-md rounded-lg">
+    <div className="p-2 bg-sky-100 m-10 shadow-md rounded-lg">
       <input
+        className="bg-sky-300 shadow-md rounded-lg"
         value={ticker}
         onChange={(e) => setTicker(e.target.value)}
         placeholder="Ex: PETR4"
       />
-      <button onClick={handleSearch}>Buscar</button>
+      <button
+        className="bg-sky-300 shadow-md rounded-lg m-2"
+        onClick={handleSearch}
+      >
+        Buscar
+      </button>
 
       <Chart
         options={options}
