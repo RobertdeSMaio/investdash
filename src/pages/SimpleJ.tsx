@@ -6,7 +6,7 @@ import NavBar from "../componentes/NavBar";
 
 export default function SimpleJ() {
   const [valorInicial, setValorInicial] = useState(0);
-  const [aporteMensal, setAporteMensal] = useState(0);
+  const [aporteMensal] = useState(0);
   const [taxa, setTaxa] = useState(0);
   const [periodo, setPeriodo] = useState(0);
   const [tipoPeriodo, setTipoPeriodo] = useState("ANOS");
