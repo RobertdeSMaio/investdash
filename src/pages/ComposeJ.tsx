@@ -12,7 +12,7 @@ interface LogMensal {
   acumulado: number;
 }
 
-export default function SimuladorInvestimentoFinal() {
+export default function ComposeJ() {
   // Estados para os Inputs
   const [valorInicial, setValorInicial] = useState(0);
   const [aporteMensal, setAporteMensal] = useState(0);
