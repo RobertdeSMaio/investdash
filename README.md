@@ -1,7 +1,7 @@
 # InvestDash 📈
 Dashboard moderno para gestão de investimentos e análise de ativos.
 
-O InvestDash é uma Single Page Application (SPA) de alta performance desenvolvida com React e Vite. O projeto oferece uma interface intuitiva para monitoramento de carteira, utilizando as melhores práticas de formulários e visualização de dados.
+O InvestDash é uma site de alta performance desenvolvida com React e Vite. O projeto oferece uma interface intuitiva para monitoramento de carteira, utilizando as melhores práticas de formulários e visualização de dados.
 
 # 🛠️ Tecnologias e Bibliotecas
 ## Frontend Core
