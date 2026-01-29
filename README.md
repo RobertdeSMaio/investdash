@@ -1,9 +1,9 @@
-##InvestDash 📈
+## InvestDash 📈
 Dashboard moderno para gestão de investimentos e análise de ativos.
 
 O InvestDash é uma Single Page Application (SPA) de alta performance desenvolvida com React e Vite. O projeto oferece uma interface intuitiva para monitoramento de carteira, utilizando as melhores práticas de formulários e visualização de dados.
 
-##🛠️ Tecnologias e Bibliotecas
+## 🛠️ Tecnologias e Bibliotecas
 #Frontend Core
 React + Vite: Performance otimizada e Hot Module Replacement (HMR) ultrarrápido.
 
@@ -19,7 +19,7 @@ Tailwind CSS: Estilização baseada em utilitários para um design responsivo.
 
 Lucide React: Biblioteca de ícones.
 
-#Gráficos e Dados
+# Gráficos e Dados
 Recharts / Chart.js: Visualização dinâmica da composição da carteira.
 
 Axios: Cliente HTTP para consumo de APIs de finanças.
@@ -57,7 +57,7 @@ src/services/: Configurações de API e chamadas Axios.
 
 src/hooks/: Lógica de estado e autenticação.
 
-#Projeto em construção, backend e banco em construção
+# Projeto em construção, backend e banco em construção
 
 Desenvolvido por Robert de S. Maio
 
