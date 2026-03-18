@@ -8,18 +8,29 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   const validationSchema = Yup.object({
-    email: Yup.string()
-      .email("E-mail inválido")
-      .required("O e-mail é obrigatório"),
+    identifier: Yup.string()
+      .required("Campo obrigatório")
+      .test(
+        "test-login",
+        "Formato inválido (Use CPF, E-mail ou Nome)",
+        (value) => {
+          if (!value) return false;
+
+          const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+          const isCPF = /^\d{11}$/.test(value);
+          const isName = value && value.length > 3;
+
+          return Boolean(isEmail || isCPF || isName);
+        },
+      ),
     password: Yup.string()
       .min(6, "A senha deve ter pelo mens 6 caracteres")
       .required("A senha é obrigatória"),
   });
 
-  /* Validação e post do formulário do login*/
   const formik = useFormik({
     initialValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
     validationSchema,
@@ -33,9 +44,8 @@ export default function Login() {
 
         localStorage.setItem("token", response.data.token);
       } catch (error) {
-        alert("E-mail ou senha incorretos.");
+        alert("Login ou senha incorretos.");
       }
-      /*alert("Login realizado com sucesso! Verifique o console.");*/
     },
   });
 
@@ -43,7 +53,7 @@ export default function Login() {
     <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4 shadow-md rounded-lg">
       <div className="bg-sky-200 p-8 rounded-xl shadow-lg w-full max-w-md">
         <h1 className="text-2xl font-bold text-sky-600 mb-6 text-center">
-          Login
+          InvestDash
         </h1>
 
         <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
@@ -53,21 +63,22 @@ export default function Login() {
               htmlFor="email"
               className="text-sm font-medium text-gray-700"
             >
-              E-mail
+              Login
             </label>
             <input
-              type="email"
-              id="email"
-              {...formik.getFieldProps("email")}
+              placeholder="CPF, E-mail ou Nome"
+              type="identifier"
+              id="identifier"
+              {...formik.getFieldProps("identifier")}
               className={`p-2 border rounded-lg outline-none shadow-md ${
-                formik.touched.email && formik.errors.email
+                formik.touched.identifier && formik.errors.identifier
                   ? "border-red-500"
                   : "border-gray-300"
               }`}
             />
-            {formik.touched.email && formik.errors.email && (
+            {formik.touched.identifier && formik.errors.identifier && (
               <span className="text-red-500 text-xs">
-                {formik.errors.email}
+                {formik.errors.identifier}
               </span>
             )}
           </div>
@@ -76,12 +87,10 @@ export default function Login() {
           <div className="flex flex-col gap-1 mb-6">
             <label htmlFor="password">Senha</label>
 
-            {/* O container do input e do botão precisa ser relative e NÃO ter flex-col */}
             <div className="relative flex items-center">
               <input
                 id="password"
                 {...formik.getFieldProps("password")}
-                // O type vem DEPOIS do getFieldProps para garantir que o estado mande
                 type={showPassword ? "text" : "password"}
                 className={`w-full p-2 border rounded-md outline-none pr-12 ${
                   formik.touched.password && formik.errors.password
@@ -109,7 +118,7 @@ export default function Login() {
               </span>
             )}
           </div>
-          <div className="space-x-59">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="submit"
               className="mt-2 bg-sky-500 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors"
@@ -118,7 +127,7 @@ export default function Login() {
             </button>
             <Link
               to="/register"
-              className="mt-2 bg-sky-500 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors"
+              className="justify-center flex mt-2 bg-sky-500 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors"
             >
               Registrar
             </Link>

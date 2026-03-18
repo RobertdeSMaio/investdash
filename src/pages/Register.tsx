@@ -1,19 +1,23 @@
 import { useFormik } from "formik";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import * as Yup from "yup";
 
 export default function Register() {
-  // Estados para controlar a visibilidade de cada campo de senha
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const formik = useFormik({
     initialValues: {
       email: "",
+      name: "",
+      cpf: "",
       password: "",
       confirmPassword: "",
     },
     validationSchema: Yup.object({
+      name: Yup.string().required("Obrigatório"),
+      cpf: Yup.string().required("Obrigatório"),
       email: Yup.string().email("E-mail inválido").required("Obrigatório"),
       password: Yup.string()
         .min(6, "Mínimo 6 caracteres")
@@ -38,6 +42,38 @@ export default function Register() {
           Register
         </h1>
 
+        {/* Campo Nome */}
+        <div className="flex flex-col gap-1 mb-6">
+          <label htmlFor="name" className="text-sm font-medium text-gray-700">
+            Nome
+          </label>
+          <input
+            type="name"
+            id="name"
+            {...formik.getFieldProps("name")}
+            className={`p-2 border rounded-lg outline-none shadow-sm transition-all ${
+              formik.touched.name && formik.errors.name
+                ? "border-red-500"
+                : "border-gray-300 focus:border-sky-500"
+            }`}
+          />
+        </div>
+        {/* Campo Cpf */}
+        <div className="flex flex-col gap-1 mb-6">
+          <label htmlFor="cpf" className="text-sm font-medium text-gray-700">
+            CPF
+          </label>
+          <input
+            type="cpf"
+            id="cpf"
+            {...formik.getFieldProps("cpf")}
+            className={`p-2 border rounded-lg outline-none shadow-sm transition-all ${
+              formik.touched.cpf && formik.errors.cpf
+                ? "border-red-500"
+                : "border-gray-300 focus:border-sky-500"
+            }`}
+          />
+        </div>
         {/* Campo E-mail */}
         <div className="flex flex-col gap-1 mb-6">
           <label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -125,13 +161,21 @@ export default function Register() {
             </span>
           )}
         </div>
-
-        <button
-          type="submit"
-          className="bg-sky-500 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors shadow-md"
-        >
-          Registrar
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            to="/"
+            type="submit"
+            className="justify-center flex bg-sky-200 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors shadow-md"
+          >
+            Voltar
+          </Link>
+          <button
+            type="submit"
+            className="bg-sky-300 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors shadow-md"
+          >
+            Registrar
+          </button>
+        </div>
       </form>
     </main>
   );

@@ -2,8 +2,8 @@ import { type ApexOptions } from "apexcharts";
 import { Calculator } from "lucide-react";
 import { useState } from "react";
 import Chart from "react-apexcharts";
-import NavBar from "../componentes/NavBar";
-import InputGroup from "../componentes/inputs";
+import CardResult from "../componentes/composedTax/CardResult";
+import InputGroup from "../componentes/inputs/InputGroup";
 
 interface LogMensal {
   mes: number;
@@ -14,14 +14,12 @@ interface LogMensal {
 }
 
 export default function ComposeJ() {
-  // Estados para os Inputs
   const [valorInicial, setValorInicial] = useState(0);
   const [aporteMensal, setAporteMensal] = useState(0);
   const [taxa, setTaxa] = useState(0);
   const [periodo, setPeriodo] = useState(0);
   const [tipoPeriodo, setTipoPeriodo] = useState("ANOS");
 
-  // Estados para os Resultados
   const [logs, setLogs] = useState<LogMensal[]>([]);
   const [resumo, setResumo] = useState({
     totalFinal: 0,
@@ -38,8 +36,8 @@ export default function ComposeJ() {
     let jurosAcumulado = 0;
     const historico: LogMensal[] = [];
 
-    for (let i = 0; i <= mesesTotais; i++) {
-      if (i > 0) {
+    for (let i = 1; i <= mesesTotais; i++) {
+      if (i > 1) {
         const jurosDoMes = acumulado * taxaMensal;
         jurosAcumulado += jurosDoMes;
         investidoTotal += aporteMensal;
@@ -47,7 +45,7 @@ export default function ComposeJ() {
       }
       historico.push({
         mes: i,
-        jurosNoMes: i === 0 ? 0 : acumulado * taxaMensal,
+        jurosNoMes: i === 1 ? 1 : acumulado * taxaMensal,
         totalInvestido: investidoTotal,
         totalJuros: jurosAcumulado,
         acumulado: acumulado,
@@ -78,9 +76,7 @@ export default function ComposeJ() {
 
   return (
     <>
-      <NavBar />
       <div className="bg-gray-100 min-h-screen p-6 space-y-6">
-        {/* 1. INPUTS (Display idêntico à imagem) */}
         <div className="max-w-6xl mx-auto bg-sky-200 p-6 rounded-lg shadow-md ">
           <h2 className="text-xs font-bold uppercase mb-6 flex items-center gap-2">
             Simulador de Juros Compostos
@@ -123,7 +119,6 @@ export default function ComposeJ() {
           </div>
         </div>
 
-        {/* 2. RESULTADOS (Cards e Donut) */}
         {resumo.totalFinal > 0 && (
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -157,7 +152,6 @@ export default function ComposeJ() {
           </div>
         )}
 
-        {/* 3. GRÁFICO DE EVOLUÇÃO */}
         {logs.length > 0 && (
           <div className="max-w-6xl mx-auto bg-sky-200 p-6 rounded shadow border">
             <h3 className="text-xs font-bold uppercase mb-6 border-b pb-2">
@@ -176,28 +170,5 @@ export default function ComposeJ() {
         )}
       </div>
     </>
-  );
-}
-
-// COMPONENTES AUXILIARES (Para manter o código limpo)
-
-function CardResult({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  return (
-    <div className="bg-sky-200 p-6 rounded shadow border text-center">
-      <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">
-        {label}
-      </p>
-      <p className={`text-xl font-bold ${color}`}>
-        R$ {value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-      </p>
-    </div>
   );
 }

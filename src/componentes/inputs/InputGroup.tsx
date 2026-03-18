@@ -34,7 +34,7 @@ export default function InputGroup({
         <input
           id={id}
           type="number"
-          title={label} // Resolve erro de acessibilidade
+          title={label}
           className="w-full p-2 outline-none text-sm"
           onChange={(e) => onChange(Number(e.target.value))}
         />

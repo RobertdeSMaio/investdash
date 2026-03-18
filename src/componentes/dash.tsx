@@ -1,4 +1,4 @@
-import { type ApexOptions } from "apexcharts"; // O 'type' aqui mata o erro do tsconfig
+import { type ApexOptions } from "apexcharts";
 import { useState } from "react";
 import Chart from "react-apexcharts";
 
@@ -35,7 +35,7 @@ export default function Dash() {
 
   const options: ApexOptions = {
     chart: { id: "finance-chart" },
-    xaxis: { categories: categories }, // Agora você está LENDO a variável categories
+    xaxis: { categories: categories },
   };
 
   return (
@@ -53,12 +53,7 @@ export default function Dash() {
         Buscar
       </button>
 
-      <Chart
-        options={options}
-        series={series} // Agora você está LENDO a variável series
-        type="line"
-        height={350}
-      />
+      <Chart options={options} series={series} type="line" height={350} />
     </div>
   );
 }
