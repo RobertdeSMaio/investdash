@@ -1,5 +1,6 @@
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import NavBar from "../componentes/NavBar";
+import About from "../pages/About";
 import ComposeJ from "../pages/ComposeJ";
 import Home from "../pages/Home";
 import Invest from "../pages/Invest";
@@ -25,6 +26,7 @@ export default function Rout() {
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<Login />} />
         <Route element={<PageLayout />}>
+          <Route path="/about" element={<About />} />
           <Route path="/invest" element={<Invest />} />
           <Route path="/simplej" element={<SimpleJ />} />
           <Route path="/composej" element={<ComposeJ />} />
