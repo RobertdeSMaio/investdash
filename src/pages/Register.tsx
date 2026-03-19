@@ -1,11 +1,37 @@
+import axios from "axios";
 import { useFormik } from "formik";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [serverError, setServerError] = useState(null);
+
+  const navigate = useNavigate();
+
+  const validateCPF = (cpf: string) => {
+    cpf = cpf.replace(/[^\d]+/g, "");
+    if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
+
+    let soma = 0,
+      resto;
+    for (let i = 1; i <= 9; i++)
+      soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf.substring(9, 10))) return false;
+
+    soma = 0;
+    for (let i = 1; i <= 10; i++)
+      soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf.substring(10, 11))) return false;
+
+    return true;
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -17,7 +43,11 @@ export default function Register() {
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Obrigatório"),
-      cpf: Yup.string().required("Obrigatório"),
+      cpf: Yup.string()
+        .required("Obrigatório")
+        .test("cpf-valido", "CPF inválido", (value) =>
+          validateCPF(value || ""),
+        ),
       email: Yup.string().email("E-mail inválido").required("Obrigatório"),
       password: Yup.string()
         .min(6, "Mínimo 6 caracteres")
@@ -26,9 +56,39 @@ export default function Register() {
         .oneOf([Yup.ref("password")], "As senhas não conferem")
         .required("Obrigatório"),
     }),
-    onSubmit: (values) => {
-      console.log("Dados prontos para o Banco:", values);
-      alert("Registro enviado! Verifique o console.");
+    onSubmit: async (values, actions) => {
+      setServerError(null);
+      const payload = {
+        Name: values.name,
+        Email: values.email,
+        Password: values.password,
+        Cpf: values.cpf,
+      };
+      try {
+        const response = await axios.post(
+          "https://dash-back-hy8l.onrender.com//api/User/Registrar",
+          payload,
+        );
+        if (response.data.token) {
+          localStorage.setItem("token", response.data.token);
+        }
+        navigate("/");
+      } catch (error) {
+        const err = error as any;
+        if (err.response && err.response.status === 409) {
+          actions.setErrors({ email: "E-mail já está em uso" });
+        } else if (err.response && err.response.status === 400) {
+          actions.setErrors({ cpf: "CPF já está em uso" });
+        } else {
+          actions.setErrors({
+            email:
+              "Não foi possível conectar ao servidor. Tente novamente mais tarde.",
+          });
+        }
+        console.log("Erro no registro", error);
+      } finally {
+        actions.setSubmitting(false);
+      }
     },
   });
 
@@ -42,13 +102,12 @@ export default function Register() {
           Register
         </h1>
 
-        {/* Campo Nome */}
         <div className="flex flex-col gap-1 mb-6">
           <label htmlFor="name" className="text-sm font-medium text-gray-700">
             Nome
           </label>
           <input
-            type="name"
+            type="text"
             id="name"
             {...formik.getFieldProps("name")}
             className={`p-2 border rounded-lg outline-none shadow-sm transition-all ${
@@ -57,14 +116,17 @@ export default function Register() {
                 : "border-gray-300 focus:border-sky-500"
             }`}
           />
+          {formik.touched.name && formik.errors.name && (
+            <span className="text-red-500 text-xs">{formik.errors.name}</span>
+          )}
         </div>
-        {/* Campo Cpf */}
+
         <div className="flex flex-col gap-1 mb-6">
           <label htmlFor="cpf" className="text-sm font-medium text-gray-700">
             CPF
           </label>
           <input
-            type="cpf"
+            type="text"
             id="cpf"
             {...formik.getFieldProps("cpf")}
             className={`p-2 border rounded-lg outline-none shadow-sm transition-all ${
@@ -73,8 +135,11 @@ export default function Register() {
                 : "border-gray-300 focus:border-sky-500"
             }`}
           />
+          {formik.touched.cpf && formik.errors.cpf && (
+            <span className="text-red-500 text-xs">{formik.errors.cpf}</span>
+          )}
         </div>
-        {/* Campo E-mail */}
+
         <div className="flex flex-col gap-1 mb-6">
           <label htmlFor="email" className="text-sm font-medium text-gray-700">
             E-mail
@@ -94,7 +159,6 @@ export default function Register() {
           )}
         </div>
 
-        {/* Campo Senha */}
         <div className="flex flex-col gap-1 mb-6">
           <label
             htmlFor="password"
@@ -114,7 +178,7 @@ export default function Register() {
               }`}
             />
             <button
-              type="button" // Essencial para não submeter o form ao clicar
+              type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-sky-600 hover:text-sky-800"
             >
@@ -128,7 +192,6 @@ export default function Register() {
           )}
         </div>
 
-        {/* Campo Repetir Senha */}
         <div className="flex flex-col gap-1 mb-10">
           <label
             htmlFor="confirmPassword"
@@ -161,10 +224,10 @@ export default function Register() {
             </span>
           )}
         </div>
+
         <div className="grid grid-cols-2 gap-2">
           <Link
             to="/"
-            type="submit"
             className="justify-center flex bg-sky-200 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors shadow-md"
           >
             Voltar

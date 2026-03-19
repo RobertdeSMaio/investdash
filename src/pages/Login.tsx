@@ -1,12 +1,12 @@
 import axios from "axios";
 import { useFormik } from "formik";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
-
+  const navigate = useNavigate();
   const validationSchema = Yup.object({
     identifier: Yup.string()
       .required("Campo obrigatório")
@@ -34,17 +34,40 @@ export default function Login() {
       password: "",
     },
     validationSchema,
-    onSubmit: async (values) => {
+    onSubmit: async (values, actions) => {
       console.log("Dados do login:", values);
+      const payload = {
+        Email: values.identifier,
+        Password: values.password,
+      };
       try {
         const response = await axios.post(
-          "http://localhost:3000/login",
-          values,
+          "https://dash-back-hy8l.onrender.com/api/User/login",
+          payload,
         );
 
         localStorage.setItem("token", response.data.token);
+        localStorage.setItem("role", response.data.role);
+        localStorage.setItem("userId", response.data.id);
+        navigate("/home");
       } catch (error) {
-        alert("Login ou senha incorretos.");
+        console.log("Erro no login", error);
+        const err = error as any;
+        if (
+          err.response &&
+          (err.response.status === 401 || err.response.status === 400)
+        ) {
+          actions.setErrors({
+            identifier: "E-mail ou senha incorretos",
+          });
+        } else {
+          actions.setErrors({
+            identifier:
+              "Não foi possível conectar ao servidor. Tente novamente mais tarde.",
+          });
+        }
+      } finally {
+        actions.setSubmitting(false);
       }
     },
   });
