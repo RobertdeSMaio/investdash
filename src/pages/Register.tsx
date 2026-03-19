@@ -10,7 +10,6 @@ export default function Register() {
   const [serverError, setServerError] = useState(null);
 
   const navigate = useNavigate();
-
   const validateCPF = (cpf: string) => {
     cpf = cpf.replace(/[^\d]+/g, "");
     if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
@@ -101,7 +100,12 @@ export default function Register() {
         <h1 className="text-2xl font-bold text-sky-600 mb-10 text-center">
           Register
         </h1>
-
+        {serverError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-sm animate-pulse">
+            <strong className="font-bold">Ops! </strong>
+            <span className="inline">{serverError}</span>
+          </div>
+        )}
         <div className="flex flex-col gap-1 mb-6">
           <label htmlFor="name" className="text-sm font-medium text-gray-700">
             Nome
