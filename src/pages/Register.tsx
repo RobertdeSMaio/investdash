@@ -39,6 +39,7 @@ export default function Register() {
       cpf: "",
       password: "",
       confirmPassword: "",
+      role: "Basic Invester",
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Obrigatório"),
@@ -62,6 +63,7 @@ export default function Register() {
         Email: values.email,
         Password: values.password,
         Cpf: values.cpf,
+        Role: values.role,
       };
       try {
         const response = await axios.post(
