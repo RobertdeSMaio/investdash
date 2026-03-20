@@ -42,7 +42,7 @@ export default function Login() {
       };
       try {
         const response = await axios.post(
-          "https://dash-back-hy8l.onrender.com/api/User/login​",
+          "http://dash-back-hy8l.onrender.com/api/User/login",
           payload,
         );
 
