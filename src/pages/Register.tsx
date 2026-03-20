@@ -61,8 +61,8 @@ export default function Register() {
       const payload = {
         Name: values.name,
         Email: values.email,
-        Password: values.password,
         Cpf: values.cpf,
+        Password: values.password,
         Role: values.role,
       };
       try {
