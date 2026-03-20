@@ -37,7 +37,7 @@ export default function Login() {
     onSubmit: async (values, actions) => {
       console.log("Dados do login:", values);
       const payload = {
-        Email: values.identifier,
+        Identifier: values.identifier,
         Password: values.password,
       };
       try {
