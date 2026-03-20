@@ -65,7 +65,7 @@ export default function Register() {
       };
       try {
         const response = await axios.post(
-          "https://dash-back-hy8l.onrender.com/api/User/Registrar",
+          "https://dash-back-hy8l.onrender.com/api/User/registrar",
           payload,
         );
         if (response.data.token) {
