@@ -4,12 +4,12 @@ import Dash from "../componentes/dash";
 export default function Home() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 bg-sky-300 gap-6 p-6 rounded-lg">
-      <div className="bg-sky-200 aspect-square rounded-lg shadow-sm">
+      <div className="bg-sky-200 rounded-lg shadow-sm">
         <h1 className="p-6">Dashboard - investiments</h1>
         <Dash />
       </div>
 
-      <div className="bg-sky-200 aspect-square rounded-lg shadow-sm">
+      <div className="bg-sky-200 rounded-lg shadow-sm">
         <h1 className="p-6">Calculators</h1>
         <h3></h3>
         <Link to="/composej">
