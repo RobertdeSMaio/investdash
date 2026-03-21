@@ -10,25 +10,27 @@ export default function SimpleJ() {
   const [taxa, setTaxa] = useState(0);
   const [periodo, setPeriodo] = useState(0);
   const [tipoPeriodo, setTipoPeriodo] = useState("ANOS");
+  const [tipoTaxPeriodo, setTipoTaxPeriodo] = useState("ANUAL");
 
   const [logs, setLogs] = useState<any[]>([]);
   const [resumo, setResumo] = useState({ final: 0, juros: 0, investido: 0 });
 
   const calcularSimples = () => {
     const mesesTotais = tipoPeriodo === "ANOS" ? periodo * 12 : periodo;
-    const taxaMensal = taxa / 100;
+    const taxaMensal =
+      tipoTaxPeriodo === "ANUAL" ? taxa / 100 : taxa / 100 / 12;
 
     const juroFixoMensal = valorInicial * taxaMensal;
     const historico = [];
 
-    for (let i = 1; i <= mesesTotais; i++) {
+    for (let i = 0; i <= mesesTotais; i++) {
       const totalInvestido = valorInicial + aporteMensal * i;
       const totalJuros = juroFixoMensal * i;
       const acumulado = totalInvestido + totalJuros;
 
       historico.push({
         mes: i,
-        jurosNoMes: i === 1 ? 1 : juroFixoMensal,
+        jurosNoMes: i === 0 ? 0 : juroFixoMensal,
         totalInvestido,
         totalJuros,
         acumulado,
@@ -101,6 +103,7 @@ export default function SimpleJ() {
               <select
                 title="Tipo Taxa"
                 className="bg-white px-2 border-l text-[10px] font-bold"
+                onChange={(e) => setTipoTaxPeriodo(e.target.value)}
               >
                 <option>ANUAL</option>
                 <option>MENSAL</option>

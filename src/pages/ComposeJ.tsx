@@ -19,6 +19,7 @@ export default function ComposeJ() {
   const [taxa, setTaxa] = useState(0);
   const [periodo, setPeriodo] = useState(0);
   const [tipoPeriodo, setTipoPeriodo] = useState("ANOS");
+  const [tipoTaxPeriodo, setTipoTaxPeriodo] = useState("ANUAL");
 
   const [logs, setLogs] = useState<LogMensal[]>([]);
   const [resumo, setResumo] = useState({
@@ -29,15 +30,16 @@ export default function ComposeJ() {
 
   const calcular = () => {
     const mesesTotais = tipoPeriodo === "ANOS" ? periodo * 12 : periodo;
-    const taxaMensal = taxa / 100;
+    const taxaMensal =
+      tipoTaxPeriodo === "ANUAL" ? taxa / 100 / 12 : taxa / 100;
 
     let acumulado = valorInicial;
     let investidoTotal = valorInicial;
     let jurosAcumulado = 0;
     const historico: LogMensal[] = [];
 
-    for (let i = 1; i <= mesesTotais; i++) {
-      if (i > 1) {
+    for (let i = 0; i <= mesesTotais; i++) {
+      if (i > 0) {
         const jurosDoMes = acumulado * taxaMensal;
         jurosAcumulado += jurosDoMes;
         investidoTotal += aporteMensal;
@@ -45,7 +47,7 @@ export default function ComposeJ() {
       }
       historico.push({
         mes: i,
-        jurosNoMes: i === 1 ? 1 : acumulado * taxaMensal,
+        jurosNoMes: acumulado * taxaMensal,
         totalInvestido: investidoTotal,
         totalJuros: jurosAcumulado,
         acumulado: acumulado,
@@ -94,6 +96,7 @@ export default function ComposeJ() {
               prefix="%"
               onChange={setTaxa}
               hasSelect
+              setTipo={setTipoTaxPeriodo}
             />
             <InputGroup
               id="per"
