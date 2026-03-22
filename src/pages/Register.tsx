@@ -113,6 +113,7 @@ export default function Register() {
             Nome
           </label>
           <input
+            placeholder="Nome completo"
             type="text"
             id="name"
             {...formik.getFieldProps("name")}
@@ -132,6 +133,7 @@ export default function Register() {
             CPF
           </label>
           <input
+            placeholder="digite o cpf sem pontos"
             type="text"
             id="cpf"
             {...formik.getFieldProps("cpf")}
@@ -151,6 +153,7 @@ export default function Register() {
             E-mail
           </label>
           <input
+            placeholder="exemplo@mail.com"
             type="email"
             id="email"
             {...formik.getFieldProps("email")}
@@ -174,6 +177,7 @@ export default function Register() {
           </label>
           <div className="relative">
             <input
+              placeholder="Coleque uma senha segura"
               type={showPassword ? "text" : "password"}
               id="password"
               {...formik.getFieldProps("password")}
@@ -207,6 +211,7 @@ export default function Register() {
           </label>
           <div className="relative">
             <input
+              placeholder="Repita a senha"
               type={showConfirmPassword ? "text" : "password"}
               id="confirmPassword"
               {...formik.getFieldProps("confirmPassword")}

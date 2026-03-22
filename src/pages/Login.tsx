@@ -109,10 +109,10 @@ export default function Login() {
           {/* Campo Senha */}
           <div className="flex flex-col gap-1 mb-6">
             <label htmlFor="password">Senha</label>
-
             <div className="relative flex items-center">
               <input
                 id="password"
+                placeholder="Digite sua senha aqui"
                 {...formik.getFieldProps("password")}
                 type={showPassword ? "text" : "password"}
                 className={`w-full p-2 border rounded-md outline-none pr-12 ${
