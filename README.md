@@ -59,7 +59,4 @@ src/hooks/: Lógica de estado e autenticação.
 
 ## Projeto em construção, backend e banco em construção
 
-Desenvolvido por Robert de S. Maio
-
-
 https://investdash.vercel.app/
