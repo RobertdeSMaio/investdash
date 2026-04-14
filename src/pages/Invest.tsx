@@ -18,6 +18,7 @@ export default function Invest() {
         >
           Insira
         </button>
+        {addInv}
       </div>
       <div className="shadow-md rounded-lg p-1 mt-3 bg-sky-50">
         /*TODO lista de investimentos */
