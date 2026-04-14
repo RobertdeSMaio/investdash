@@ -8,7 +8,7 @@ export default function CardResult({
   color: string;
 }) {
   return (
-    <div className="bg-sky-200 p-6 rounded shadow border text-center">
+    <div className="bg-gray-200 p-6 rounded-lg shadow-lg border text-center m-4">
       <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">
         {label}
       </p>

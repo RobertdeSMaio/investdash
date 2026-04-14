@@ -79,7 +79,7 @@ export default function ComposeJ() {
   return (
     <>
       <div className="bg-gray-100 min-h-screen p-6 space-y-6">
-        <div className="max-w-6xl mx-auto bg-sky-200 p-6 rounded-lg shadow-md ">
+        <div className="max-w-6xl mx-auto bg-gray-200 p-6 rounded-lg shadow-md ">
           <h2 className="text-xs font-bold uppercase mb-6 flex items-center gap-2">
             Simulador de Juros Compostos
           </h2>
@@ -115,7 +115,7 @@ export default function ComposeJ() {
           <div className="flex justify-end gap-3 mt-8">
             <button
               onClick={calcular}
-              className="flex items-center gap-2 px-6 py-2 bg-sky-100 text-sky-500 rounded text-xs font-bold hover:bg-slate-900 shadow-lg"
+              className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-sky-500 rounded text-xs font-bold hover:bg-slate-900 shadow-lg"
             >
               <Calculator size={14} /> CALCULAR
             </button>
@@ -141,7 +141,7 @@ export default function ComposeJ() {
                 color="text-amber-600"
               />
             </div>
-            <div className="bg-sky-200 p-4 rounded shadow border flex flex-col items-center">
+            <div className="bg-gray-200 p-4 rounded shadow border flex flex-col items-center">
               <h3 className="text-[10px] font-bold uppercase self-start mb-4">
                 Proporção
               </h3>
@@ -156,7 +156,7 @@ export default function ComposeJ() {
         )}
 
         {logs.length > 0 && (
-          <div className="max-w-6xl mx-auto bg-sky-200 p-6 rounded shadow border">
+          <div className="max-w-6xl mx-auto bg-gray-200 p-6 rounded shadow border">
             <h3 className="text-xs font-bold uppercase mb-6 border-b pb-2">
               Gráfico de Evolução
             </h3>

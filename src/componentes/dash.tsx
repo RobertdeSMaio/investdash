@@ -39,15 +39,15 @@ export default function Dash() {
   };
 
   return (
-    <div className="p-2 bg-sky-100 m-10 shadow-md rounded-lg">
+    <div className="p-2 bg-gray-100 m-10 shadow-md rounded-lg">
       <input
-        className="bg-sky-300 shadow-md rounded-lg"
+        className="bg-white shadow-md rounded-lg"
         value={ticker}
         onChange={(e) => setTicker(e.target.value)}
         placeholder="Ex: PETR4"
       />
       <button
-        className="bg-sky-300 shadow-md rounded-lg m-2"
+        className="bg-white shadow-md rounded-lg m-2"
         onClick={handleSearch}
       >
         Buscar

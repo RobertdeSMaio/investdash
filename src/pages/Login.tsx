@@ -73,8 +73,8 @@ export default function Login() {
   });
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4 shadow-md rounded-lg">
-      <div className="bg-sky-200 p-8 rounded-xl shadow-lg w-full max-w-md">
+    <main className="min-h-screen flex items-center justify-center bg-white p-4 shadow-md rounded-lg">
+      <div className="bg-gray-200 p-8 rounded-xl shadow-lg w-full max-w-md">
         <h1 className="text-2xl font-bold text-sky-600 mb-6 text-center">
           InvestDash
         </h1>

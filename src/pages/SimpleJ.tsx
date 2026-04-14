@@ -63,7 +63,7 @@ export default function SimpleJ() {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto bg-sky-200 p-6 rounded-lg shadow-md">
+      <div className="max-w-6xl mx-auto bg-gray-200 p-6 rounded-lg shadow-md">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="flex flex-col gap-1">
             <label
@@ -141,7 +141,7 @@ export default function SimpleJ() {
         <div className="flex justify-end gap-2 mt-6">
           <button
             onClick={calcularSimples}
-            className="flex items-center gap-1 px-6 py-2 bg-sky-100 text-sky-500 rounded text-[10px] font-bold uppercase hover:bg-gray-900 shadow-md"
+            className="flex items-center gap-1 px-6 py-2 bg-gray-100 text-sky-500 rounded text-[10px] font-bold uppercase hover:bg-gray-900 shadow-md"
           >
             <Calculator size={14} /> Calcular
           </button>
@@ -168,7 +168,7 @@ export default function SimpleJ() {
             />
           </div>
 
-          <div className="bg-sky-200 p-6 rounded shadow-sm">
+          <div className="bg-gray-200 p-6 rounded shadow-sm">
             <h3 className="text-[10px] font-bold uppercase mb-4 text-gray-400 border-b pb-2">
               Gráfico de Evolução
             </h3>
