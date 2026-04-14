@@ -94,10 +94,10 @@ export default function Register() {
   });
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-white p-4">
       <form
         onSubmit={formik.handleSubmit}
-        className="bg-sky-200 p-8 rounded-xl shadow-lg w-full max-w-md flex flex-col"
+        className="bg-gray-200 p-8 rounded-xl shadow-lg w-full max-w-md flex flex-col"
       >
         <h1 className="text-2xl font-bold text-sky-600 mb-10 text-center">
           Register
