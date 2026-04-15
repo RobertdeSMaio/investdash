@@ -7,6 +7,12 @@ export default function About() {
           investimentos e parar de usar planilha
         </p>
         <p>Facilitando e retirando o uso da planilha, para tirar as formulas</p>
+        <br />
+        <p className="p-2 text-2xl text-black">O que o sistema traz?</p>
+        <ul>
+          <li>Melhor organização sem usar planilha</li>
+          <li>Previsão com as calculadoras</li>
+        </ul>
       </div>
     </div>
   );
