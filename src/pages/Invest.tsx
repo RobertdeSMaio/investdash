@@ -44,6 +44,18 @@ const CLASSES_ATIVO: Record<string, { nome: string; cor: string; icon: any }> =
 
 const CORES_GRAFICO = Object.values(CLASSES_ATIVO).map((a) => a.cor);
 
+const fetchHGData = async (symbol: string) => {
+  try {
+    const response = await fetch(
+      `https://api.hgbrasil.com/finance/stock_price?key=SUA_KEY_AQUI&symbol=${symbol}&format=json-cors`, //todo criar chave e colocar na env
+    );
+    const data = await response.json();
+    return data.results[symbol];
+  } catch (error) {
+    return null;
+  }
+};
+
 export default function ModernDashboard() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [filtroAno, setFiltroAno] = useState("2026");
@@ -103,11 +115,12 @@ export default function ModernDashboard() {
   }, [movimentacoesDoAno]);
 
   return (
-    <div className="p-6 bg-stone-50 min-h-screen text-stone-900 font-sans">
+    <div className="p-6 bg-gray-300 min-h-screen text-stone-900 font-sans">
       <header className="flex flex-col sm:flex-row justify-between items-center p-5 bg-white rounded-2xl shadow-sm border border-stone-100 mb-8">
         <div>
-          <h1 className="text-2xl font-extrabold text-stone-950">InvestDash</h1>
-          <p className="text-stone-500 text-sm">Controle de Patrimônio</p>
+          <h1 className="text-2xl font-extrabold text-stone-950">
+            Controle de Patrimônio
+          </h1>
         </div>
         <div className="flex items-center gap-6">
           <div className="text-right">
@@ -126,8 +139,13 @@ export default function ModernDashboard() {
             onChange={(e) => setFiltroAno(e.target.value)}
             className="bg-stone-100 rounded-lg px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-300"
           >
+            <option value="2028">2028</option>
+            <option value="2027">2027</option>
             <option value="2026">2026</option>
             <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
           </select>
         </div>
       </header>
@@ -226,9 +244,30 @@ function NewInvestmentCard({ onAdd }: NewInvestmentCardProps) {
     valor: "",
     data: new Date().toISOString().split("T")[0],
   });
+  const [loading, setLoading] = useState(false);
+  const [isValid, setIsValid] = useState(false);
+  const [description, setDescription] = useState("");
+
+  const validateTicker = async () => {
+    if (formData.nome.length < 5) return;
+    setLoading(true);
+    const result = await fetchHGData(formData.nome);
+    if (result && !result.error) {
+      setIsValid(true);
+      setDescription(result.name);
+    } else {
+      setIsValid(false);
+      setDescription("");
+      alert("Ativo inválido ou não encontrado na HG Brasil.");
+    }
+    setLoading(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValid && (formData.tipo === "ACOES" || formData.tipo === "FIIs")) {
+      return alert("Valide o ativo na B3 antes de lançar.");
+    }
     if (!formData.nome || !formData.valor) return alert("Preencha tudo!");
 
     onAdd({
@@ -240,6 +279,8 @@ function NewInvestmentCard({ onAdd }: NewInvestmentCardProps) {
     });
 
     setFormData({ ...formData, nome: "", valor: "" });
+    setIsValid(false);
+    setDescription("");
   };
 
   return (
@@ -263,15 +304,23 @@ function NewInvestmentCard({ onAdd }: NewInvestmentCardProps) {
         </select>
 
         <div className="grid grid-cols-2 gap-3">
-          <input
-            type="text"
-            placeholder="Código"
-            value={formData.nome}
-            onChange={(e) =>
-              setFormData({ ...formData, nome: e.target.value.toUpperCase() })
-            }
-            className="w-full bg-gray-300 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-black"
-          />
+          <div className="col-span-2 relative">
+            <input
+              type="text"
+              placeholder="Código (Ex: PETR4)"
+              value={formData.nome}
+              onBlur={validateTicker}
+              onChange={(e) =>
+                setFormData({ ...formData, nome: e.target.value.toUpperCase() })
+              }
+              className={`w-full bg-gray-300 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-black ${isValid ? "border-2 border-emerald-500" : ""}`}
+            />
+            {loading && (
+              <span className="absolute right-3 top-3 text-[10px] animate-pulse">
+                Buscando...
+              </span>
+            )}
+          </div>
           <input
             type="number"
             placeholder="Valor"
@@ -281,14 +330,19 @@ function NewInvestmentCard({ onAdd }: NewInvestmentCardProps) {
             }
             className="w-full bg-gray-300 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-black"
           />
+          <input
+            type="date"
+            value={formData.data}
+            onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+            className="w-full bg-gray-300 rounded-xl px-4 py-3 text-sm outline-none"
+          />
         </div>
 
-        <input
-          type="date"
-          value={formData.data}
-          onChange={(e) => setFormData({ ...formData, data: e.target.value })}
-          className="w-full bg-gray-300 rounded-xl px-4 py-3 text-sm outline-none"
-        />
+        {description && (
+          <p className="text-[10px] text-emerald-900 font-bold truncate px-1">
+            {description}
+          </p>
+        )}
 
         <button
           type="submit"
