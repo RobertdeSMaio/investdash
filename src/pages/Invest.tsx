@@ -115,7 +115,7 @@ export default function ModernDashboard() {
   }, [movimentacoesDoAno]);
 
   return (
-    <div className="p-6 bg-gray-300 min-h-screen text-stone-900 font-sans">
+    <div className="p-6 bg-gray-300 min-h-screen text-stone-900 font-sans shadow-md rounded-lg">
       <header className="flex flex-col sm:flex-row justify-between items-center p-5 bg-white rounded-2xl shadow-sm border border-stone-100 mb-8">
         <div>
           <h1 className="text-2xl font-extrabold text-stone-950">
