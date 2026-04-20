@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "npx tsc && vite build",
-    "preview": "vite preview"
+    "build": "npx tsc && npx vite build",
+    "preview": "npx vite preview"
   },
   "dependencies": {
     "react": "^18.3.1",
