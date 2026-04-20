@@ -19,7 +19,7 @@ api.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !original._retry &&
-      !original.url?.includes("/auth/refresh")
+      !original.url?.includes("/api/auth/refresh")
     ) {
       original._retry = true;
       const refreshToken = localStorage.getItem("refreshToken");
