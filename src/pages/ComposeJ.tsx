@@ -28,7 +28,7 @@ export default function ComposeJ() {
           Fórmula: <span className="font-mono text-gray-300">M = P × (1 + r)ᵗ</span>
         </p>
         <InvestCalculator
-          type="Compound"
+          type="composta"
           label="Juros Compostos"
           color="bg-purple-600 hover:bg-purple-500"
           calculate={calcCompound}

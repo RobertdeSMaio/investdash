@@ -109,8 +109,8 @@ export default function Home() {
                     <tr key={inv.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition">
                       <td className="px-5 py-3 font-medium">{inv.name}</td>
                       <td className="px-5 py-3">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${inv.type === "Simple" ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400"}`}>
-                          {inv.type === "Simple" ? "Simples" : "Composta"}
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${inv.type === "simples" ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400"}`}>
+                          {inv.type === "simples" ? "Simples" : "Composta"}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-right text-gray-300">{fmt(inv.principal)}</td>

@@ -6,7 +6,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      "/api": "https://dash-back-hy8l.onrender.com/api",
+      "/api": {
+        target: "https://dash-back-hy8l.onrender.com",
+        changeOrigin: true,
+      },
     },
   },
 });

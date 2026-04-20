@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { TrendingUp, User, LogOut, BarChart2 } from "lucide-react";
+import { TrendingUp, User, LogOut } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
 export function NavBar() {

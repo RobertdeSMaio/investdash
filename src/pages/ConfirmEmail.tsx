@@ -18,7 +18,7 @@ export default function ConfirmEmail() {
     authService.confirmEmail(token, email)
       .then(() => { refreshUser(); setStatus("success"); })
       .catch(() => setStatus("error"));
-  }, []);
+  }, [params, refreshUser]);
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">

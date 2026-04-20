@@ -14,7 +14,7 @@ interface CalcResult {
 }
 
 interface Props {
-  type: "Simple" | "Compound";
+  type: "simples" | "composta";
   label: string;
   color: string;
   calculate: (principal: number, rate: number, period: number) => CalcResult;

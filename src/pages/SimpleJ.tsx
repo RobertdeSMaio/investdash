@@ -21,7 +21,7 @@ export default function SimpleJ() {
           Fórmula: <span className="font-mono text-gray-300">M = P × (1 + r × t)</span>
         </p>
         <InvestCalculator
-          type="Simple"
+          type="simples"
           label="Juros Simples"
           color="bg-blue-600 hover:bg-blue-500"
           calculate={calcSimple}

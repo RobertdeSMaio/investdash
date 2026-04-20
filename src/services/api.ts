@@ -1,9 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL:
-    (import.meta as any).env.VITE_API_URL ??
-    "https://dash-back-hy8l.onrender.com/api",
+  baseURL: (import.meta as { env: { VITE_API_URL?: string } }).env.VITE_API_URL ?? "/api",
   headers: { "Content-Type": "application/json" },
 });
 
@@ -27,10 +25,8 @@ api.interceptors.response.use(
       }
       try {
         const { data } = await api.post("/auth/refresh", { refreshToken });
-
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("refreshToken", data.refreshToken);
-
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(original);
       } catch (err) {
@@ -40,7 +36,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 export default api;
