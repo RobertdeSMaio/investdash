@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: (import.meta as { env: { VITE_API_URL?: string } }).env.VITE_API_URL ?? "/api",
+  baseURL: import.meta.env.VITE_API_URL,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -15,18 +15,30 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
+
+    if (
+      error.response?.status === 401 &&
+      !original._retry &&
+      !original.url?.includes("/auth/refresh")
+    ) {
       original._retry = true;
       const refreshToken = localStorage.getItem("refreshToken");
+
       if (!refreshToken) {
         localStorage.clear();
         window.location.href = "/login";
         return Promise.reject(error);
       }
+
       try {
-        const { data } = await api.post("/auth/refresh", { refreshToken });
+        const { data } = await axios.post(
+          `${import.meta.env.VITE_API_URL}/auth/refresh`,
+          { refreshToken },
+        );
+
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("refreshToken", data.refreshToken);
+
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(original);
       } catch (err) {
@@ -36,7 +48,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
