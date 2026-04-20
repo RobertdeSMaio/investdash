@@ -1,162 +1,92 @@
-import axios from "axios";
 import { useFormik } from "formik";
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import * as Yup from "yup";
+import { useState } from "react";
+import { TrendingUp } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { loginSchema } from "../utils/validationSchemas";
+import { Input } from "../components/shared/Input";
 
 export default function Login() {
-  const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const validationSchema = Yup.object({
-    identifier: Yup.string()
-      .required("Campo obrigatório")
-      .test(
-        "test-login",
-        "Formato inválido (Use CPF, E-mail ou Nome)",
-        (value) => {
-          if (!value) return false;
-
-          const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-          const isCPF = /^\d{11}$/.test(value);
-          const isName = value && value.length > 3;
-
-          return Boolean(isEmail || isCPF || isName);
-        },
-      ),
-    password: Yup.string()
-      .min(6, "A senha deve ter pelo mens 6 caracteres")
-      .required("A senha é obrigatória"),
-  });
+  const [serverError, setServerError] = useState("");
 
   const formik = useFormik({
-    initialValues: {
-      identifier: "",
-      password: "",
-    },
-    validationSchema,
-    onSubmit: async (values, actions) => {
-      console.log("Dados do login:", values);
-      const payload = {
-        Identifier: values.identifier,
-        Password: values.password,
-      };
+    initialValues: { email: "", password: "" },
+    validationSchema: loginSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      setServerError("");
       try {
-        const response = await axios.post(
-          "https://dash-back-hy8l.onrender.com/api/User/login",
-          payload,
-        );
-
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("role", response.data.role);
-        localStorage.setItem("userId", response.data.id);
-        navigate("/home");
-      } catch (error) {
-        console.log("Erro no login", error);
-        const err = error as any;
-        if (
-          err.response &&
-          (err.response.status === 401 || err.response.status === 400)
-        ) {
-          actions.setErrors({
-            identifier: "E-mail ou senha incorretos",
-          });
-        } else {
-          actions.setErrors({
-            identifier:
-              "Não foi possível conectar ao servidor. Tente novamente mais tarde.",
-          });
-        }
+        await login(values.email, values.password);
+        navigate("/");
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { message?: string } } };
+        setServerError(e?.response?.data?.message ?? "E-mail ou senha incorretos.");
       } finally {
-        actions.setSubmitting(false);
+        setSubmitting(false);
       }
     },
   });
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-white p-4 shadow-md rounded-lg">
-      <div className="bg-gray-200 p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold text-sky-600 mb-6 text-center">
-          InvestDash
-        </h1>
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col items-center mb-8 gap-2">
+          <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+            <TrendingUp className="text-emerald-400" size={24} />
+          </div>
+          <h1 className="text-2xl font-bold text-white">InvestDash</h1>
+          <p className="text-gray-400 text-sm">Entre na sua conta</p>
+        </div>
 
         <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
-          {/* Campo E-mail */}
+          {serverError && (
+            <p className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3">
+              {serverError}
+            </p>
+          )}
+
+          <Input
+            label="E-mail"
+            type="email"
+            placeholder="seu@email.com"
+            {...formik.getFieldProps("email")}
+            error={formik.errors.email}
+            touched={formik.touched.email}
+          />
+
           <div className="flex flex-col gap-1">
-            <label
-              htmlFor="email"
-              className="text-sm font-medium text-gray-700"
-            >
-              Login
-            </label>
-            <input
-              placeholder="CPF, E-mail ou Nome"
-              type="identifier"
-              id="identifier"
-              {...formik.getFieldProps("identifier")}
-              className={`p-2 border rounded-lg outline-none shadow-md ${
-                formik.touched.identifier && formik.errors.identifier
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
+            <Input
+              label="Senha"
+              type="password"
+              placeholder="••••••••"
+              {...formik.getFieldProps("password")}
+              error={formik.errors.password}
+              touched={formik.touched.password}
             />
-            {formik.touched.identifier && formik.errors.identifier && (
-              <span className="text-red-500 text-xs">
-                {formik.errors.identifier}
-              </span>
-            )}
-          </div>
-
-          {/* Campo Senha */}
-          <div className="flex flex-col gap-1 mb-6">
-            <label htmlFor="password">Senha</label>
-            <div className="relative flex items-center">
-              <input
-                id="password"
-                placeholder="Digite sua senha aqui"
-                {...formik.getFieldProps("password")}
-                type={showPassword ? "text" : "password"}
-                className={`w-full p-2 border rounded-md outline-none pr-12 ${
-                  formik.touched.password && formik.errors.password
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-              />
-
-              <button
-                type="button"
-                onClick={() => {
-                  console.log("Botão clicado! Estado anterior:", showPassword);
-                  setShowPassword(!showPassword);
-                }}
-                className="absolute right-3 z-10 p-1 text-xs font-bold text-sky-600 hover:text-sky-800"
-                style={{ top: "50%", transform: "translateY(-50%)" }}
-              >
-                {showPassword ? "Ocultar" : "Ver"}
-              </button>
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-xs text-emerald-400 hover:text-emerald-300">
+                Esqueci a senha
+              </Link>
             </div>
+          </div>
 
-            {formik.touched.password && formik.errors.password && (
-              <span className="text-red-500 text-xs">
-                {formik.errors.password}
-              </span>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="submit"
-              className="mt-2 bg-sky-500 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors"
-            >
-              Entrar
-            </button>
-            <Link
-              to="/register"
-              className="justify-center flex mt-2 bg-sky-500 text-white p-2 rounded-md font-bold hover:bg-sky-600 transition-colors"
-            >
-              Registrar
-            </Link>
-          </div>
+          <button
+            type="submit"
+            disabled={formik.isSubmitting}
+            className="mt-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold py-2.5 rounded-lg transition"
+          >
+            {formik.isSubmitting ? "Entrando..." : "Entrar"}
+          </button>
         </form>
+
+        <p className="text-center text-sm text-gray-400 mt-6">
+          Não tem conta?{" "}
+          <Link to="/register" className="text-emerald-400 hover:text-emerald-300 font-medium">
+            Cadastre-se
+          </Link>
+        </p>
       </div>
-    </main>
+    </div>
   );
 }

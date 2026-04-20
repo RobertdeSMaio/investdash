@@ -1,42 +1,39 @@
-import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
-import NavBar from "../componentes/NavBar";
-import About from "../pages/About";
-import ComposeJ from "../pages/ComposeJ";
-import Home from "../pages/Home";
-import Invest from "../pages/Invest";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "../hooks/useAuth";
+import { PrivateRoute } from "./PrivateRoute";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
+import ConfirmEmail from "../pages/ConfirmEmail";
+import Home from "../pages/Home";
+import Profile from "../pages/Profile";
+import Invest from "../pages/Invest";
 import SimpleJ from "../pages/SimpleJ";
+import ComposeJ from "../pages/ComposeJ";
 
-const PageLayout = () => {
-  return (
-    <div className="flex flex-col h-screen w-full overflow-hidden">
-      <NavBar />
-      <main className="flex-1 p-5 overflow-y-auto bg-slate-100">
-        <Outlet />
-      </main>
-    </div>
-  );
-};
-
-export default function Rout() {
+export function AppRoutes() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/register" element={<Register />} />
-        <Route path="/" element={<Login />} />
-        <Route element={<PageLayout />}>
-          <Route path="/about" element={<About />} />
-          <Route path="/invest" element={<Invest />} />
-          <Route path="/simplej" element={<SimpleJ />} />
-          <Route path="/composej" element={<ComposeJ />} />
-          <Route path="/home" element={<Home />} />
-        </Route>
-        <Route
-          path="*"
-          element={<h1>Página não encontrada! Verifique a URL.</h1>}
-        />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/confirm-email" element={<ConfirmEmail />} />
+
+          <Route element={<PrivateRoute />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/invest" element={<Invest />} />
+            <Route path="/invest/simples" element={<SimpleJ />} />
+            <Route path="/invest/composto" element={<ComposeJ />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
