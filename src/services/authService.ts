@@ -12,12 +12,12 @@ import api from "./api";
 
 export const authService = {
   async login(data: LoginRequest): Promise<{ user: User; tokens: AuthTokens }> {
-    const res = await api.post("/api/auth/login", data);
+    const res = await api.post("/auth/login", data);
     return res.data;
   },
 
   async register(data: RegisterRequest): Promise<{ message: string }> {
-    const res = await api.post("/api/auth/register", data);
+    const res = await api.post("/auth/register", data);
     return res.data;
   },
 
@@ -34,40 +34,40 @@ export const authService = {
   async forgotPassword(
     data: ForgotPasswordRequest,
   ): Promise<{ message: string }> {
-    const res = await api.post("/api/auth/forgot-password", data);
+    const res = await api.post("/auth/forgot-password", data);
     return res.data;
   },
 
   async resetPassword(
     data: ResetPasswordRequest,
   ): Promise<{ message: string }> {
-    const res = await api.post("/api/auth/reset-password", data);
+    const res = await api.post("/auth/reset-password", data);
     return res.data;
   },
 
   async logout(refreshToken: string): Promise<void> {
-    await api.post("/api/auth/logout", { refreshToken });
+    await api.post("/auth/logout", { refreshToken });
   },
 
   async getProfile(): Promise<User> {
-    const res = await api.get("/api/profile");
+    const res = await api.get("/profile");
     return res.data;
   },
 
   async updateProfile(data: UpdateProfileRequest): Promise<User> {
-    const res = await api.put("/api/profile", data);
+    const res = await api.put("/profile", data);
     return res.data;
   },
 
   async changePassword(
     data: ChangePasswordRequest,
   ): Promise<{ message: string }> {
-    const res = await api.put("/api/profile/change-password", data);
+    const res = await api.put("/profile/change-password", data);
     return res.data;
   },
 
   async resendConfirmation(): Promise<{ message: string }> {
-    const res = await api.post("/api/auth/resend-confirmation");
+    const res = await api.post("/auth/resend-confirmation");
     return res.data;
   },
 };
