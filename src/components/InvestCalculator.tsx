@@ -14,6 +14,7 @@ import {
   BarChart2,
   GitCompare,
   RefreshCw,
+  Save,
   Table2,
   TrendingUp,
 } from "lucide-react";
@@ -93,29 +94,31 @@ function buildRowsFromValues(
   const months = periodUnit === "anual" ? period * 12 : period;
   const monthlyContrib =
     contributionFrequency === "anual" ? contribution / 12 : contribution;
+
+  // Annual rate converted to monthly — each method uses its own convention:
+  // Compound: geometric equivalent  (1+r)^(1/12) - 1
+  // Simple:   linear proportional   r / 12
+  const annualRate = periodUnit === "anual" ? rate / 100 : null;
+  const monthlyRateCompound =
+    annualRate !== null ? Math.pow(1 + annualRate, 1 / 12) - 1 : rate / 100;
+  const monthlyRateSimple = annualRate !== null ? annualRate / 12 : rate / 100;
+
   const monthlyRate =
-    calcType === "composta"
-      ? periodUnit === "anual"
-        ? Math.pow(1 + rate / 100, 1 / 12) - 1
-        : rate / 100
-      : periodUnit === "anual"
-        ? rate / 100 / 12
-        : rate / 100;
+    calcType === "composta" ? monthlyRateCompound : monthlyRateSimple;
 
   const rows: MonthRow[] = [];
   for (let m = 0; m <= months; m++) {
     let total: number;
     if (calcType === "composta") {
+      // Compound: balance reinvests every period
       total =
         monthlyRate === 0
           ? principal + monthlyContrib * m
           : principal * Math.pow(1 + monthlyRate, m) +
             monthlyContrib * ((Math.pow(1 + monthlyRate, m) - 1) / monthlyRate);
     } else {
-      const principalPart = principal * (1 + monthlyRate * m);
-      const contribPart =
-        monthlyContrib * m + (monthlyContrib * m * (monthlyRate * m)) / 2;
-      total = principalPart + contribPart;
+      // Simple: interest always over original principal, no reinvestment
+      total = principal * (1 + monthlyRate * m) + monthlyContrib * m;
     }
     const invested = principal + monthlyContrib * m;
     rows.push({
@@ -885,6 +888,25 @@ export function InvestCalculator({
                 </div>
               );
             })()}
+
+          {/* Save */}
+          <div className="pt-1 border-t border-[var(--border)]">
+            {saved ? (
+              <p className="text-center text-emerald-400 text-sm">
+                ✓ Simulação salva!
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50 py-2.5 rounded-lg transition text-sm font-medium"
+              >
+                <Save size={15} />
+                {saving ? "Salvando..." : "Salvar simulação"}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
