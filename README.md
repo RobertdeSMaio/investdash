@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+
 # InvestDash — Frontend
 
 React + Vite + TypeScript + TailwindCSS v4
@@ -24,19 +26,3 @@ VITE_API_URL=https://seu-backend.vercel.app/api
 - **Juros Compostos** — calculadora com período em meses ou anos + aportes mensais/anuais
 - **Tema claro/escuro** — alternável pelo ícone ☀️/🌙 no navbar
 - **Auth completo** — login, registro, confirmação de e-mail, reset de senha
-
-## Cotações reais (opcional)
-
-Substitua a função `fetchQuotes` em `src/pages/Home.tsx` por:
-
-```ts
-import api from "../services/api";
-
-async function fetchQuotes(tickers: string[]) {
-  const res = await fetch(
-    `https://brapi.dev/api/quote/${tickers.join(",")}?token=SEU_TOKEN`
-  );
-  const data = await res.json();
-  // mapear data.results para o formato Quote
-}
-```
