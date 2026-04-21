@@ -1,13 +1,25 @@
-import { useEffect, useState, useCallback } from "react";
 import {
-  DollarSign, BarChart2, TrendingUp, TrendingDown,
-  Plus, Trash2, Pencil, X, Check, RefreshCw,
-  ChevronDown, Building2, Globe, Landmark, Banknote, LineChart
+  Banknote,
+  BarChart2,
+  Building2,
+  ChevronDown,
+  DollarSign,
+  Globe,
+  Landmark,
+  LineChart,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+  X,
 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { NavBar } from "../components/NavBar";
 import { EmailConfirmBanner } from "../components/shared/EmailConfirmBanner";
 import { portfolioService } from "../services/portfolioService";
-import type { PortfolioAsset, AssetType, Quote } from "../types";
+import type { AssetType, PortfolioAsset, Quote } from "../types";
 
 const ASSET_LABELS: Record<AssetType, string> = {
   acao: "Ação BR",
@@ -40,24 +52,52 @@ function fmtPct(n: number) {
   return (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
 }
 
-// Simulated quotes (in production, integrate with real API like brapi.dev)
+// Real quotes from brapi.dev (free tier, no key needed for basic quotes)
 async function fetchQuotes(tickers: string[]): Promise<Record<string, Quote>> {
   if (!tickers.length) return {};
+
   const result: Record<string, Quote> = {};
-  tickers.forEach((t) => {
-    const base = Math.random() * 100 + 5;
-    const change = (Math.random() - 0.45) * 5;
-    result[t] = {
-      ticker: t,
-      name: t,
-      price: parseFloat(base.toFixed(2)),
-      change: parseFloat(change.toFixed(2)),
-      changePct: parseFloat(((change / base) * 100).toFixed(2)),
-      high: parseFloat((base + Math.random() * 3).toFixed(2)),
-      low: parseFloat((base - Math.random() * 3).toFixed(2)),
-      updatedAt: new Date().toISOString(),
-    };
-  });
+
+  try {
+    const joined = tickers.join(",");
+    const url = `https://brapi.dev/api/quote/${joined}?fundamental=false`;
+    const res = await fetch(url);
+
+    if (!res.ok) throw new Error(`brapi HTTP ${res.status}`);
+
+    const json = await res.json();
+    const items: Array<{
+      symbol: string;
+      shortName?: string;
+      longName?: string;
+      regularMarketPrice?: number;
+      regularMarketChange?: number;
+      regularMarketChangePercent?: number;
+      regularMarketDayHigh?: number;
+      regularMarketDayLow?: number;
+      regularMarketTime?: string;
+    }> = json?.results ?? [];
+
+    for (const item of items) {
+      const price = item.regularMarketPrice ?? 0;
+      const change = item.regularMarketChange ?? 0;
+      const changePct = item.regularMarketChangePercent ?? 0;
+      result[item.symbol] = {
+        ticker: item.symbol,
+        name: item.shortName ?? item.longName ?? item.symbol,
+        price,
+        change,
+        changePct,
+        high: item.regularMarketDayHigh ?? price,
+        low: item.regularMarketDayLow ?? price,
+        updatedAt: item.regularMarketTime ?? new Date().toISOString(),
+      };
+    }
+  } catch (err) {
+    console.error("Erro ao buscar cotações:", err);
+    // Fallback: retorna objeto vazio para não quebrar a UI
+  }
+
   return result;
 }
 
@@ -68,7 +108,15 @@ function AssetModal({
   initial,
 }: {
   onClose: () => void;
-  onSave: (data: Partial<PortfolioAsset> & { ticker: string; name: string; type: AssetType; quantity: number; avgPrice: number }) => Promise<void>;
+  onSave: (
+    data: Partial<PortfolioAsset> & {
+      ticker: string;
+      name: string;
+      type: AssetType;
+      quantity: number;
+      avgPrice: number;
+    },
+  ) => Promise<void>;
   initial?: PortfolioAsset;
 }) {
   const [ticker, setTicker] = useState(initial?.ticker ?? "");
@@ -76,13 +124,18 @@ function AssetModal({
   const [type, setType] = useState<AssetType>(initial?.type ?? "acao");
   const [quantity, setQuantity] = useState(initial?.quantity?.toString() ?? "");
   const [avgPrice, setAvgPrice] = useState(initial?.avgPrice?.toString() ?? "");
-  const [contributions, setContributions] = useState(initial?.contributions?.toString() ?? "0");
+  const [contributions, setContributions] = useState(
+    initial?.contributions?.toString() ?? "0",
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ticker || !name || !quantity || !avgPrice) { setError("Preencha todos os campos obrigatórios."); return; }
+    if (!ticker || !name || !quantity || !avgPrice) {
+      setError("Preencha todos os campos obrigatórios.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -103,9 +156,19 @@ function AssetModal({
     }
   };
 
-  const field = (label: string, value: string, onChange: (v: string) => void, opts?: { type?: string; placeholder?: string; required?: boolean }) => (
+  const field = (
+    label: string,
+    value: string,
+    onChange: (v: string) => void,
+    opts?: { type?: string; placeholder?: string; required?: boolean },
+  ) => (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-[var(--text-secondary)]">{label}{opts?.required !== false && <span className="text-red-400 ml-0.5">*</span>}</label>
+      <label className="text-xs font-medium text-[var(--text-secondary)]">
+        {label}
+        {opts?.required !== false && (
+          <span className="text-red-400 ml-0.5">*</span>
+        )}
+      </label>
       <input
         type={opts?.type ?? "text"}
         value={value}
@@ -120,44 +183,77 @@ function AssetModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-          <h2 className="font-semibold text-[var(--text-primary)]">{initial ? "Editar ativo" : "Adicionar ativo"}</h2>
-          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
+          <h2 className="font-semibold text-[var(--text-primary)]">
+            {initial ? "Editar ativo" : "Adicionar ativo"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
+          >
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
-            {field("Ticker", ticker, setTicker, { placeholder: "PETR4", required: true })}
+            {field("Ticker", ticker, setTicker, {
+              placeholder: "PETR4",
+              required: true,
+            })}
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-[var(--text-secondary)]">Tipo<span className="text-red-400 ml-0.5">*</span></label>
+              <label className="text-xs font-medium text-[var(--text-secondary)]">
+                Tipo<span className="text-red-400 ml-0.5">*</span>
+              </label>
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as AssetType)}
                 className="w-full rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
-                {(Object.entries(ASSET_LABELS) as [AssetType, string][]).map(([v, l]) => (
-                  <option key={v} value={v}>{l}</option>
-                ))}
+                {(Object.entries(ASSET_LABELS) as [AssetType, string][]).map(
+                  ([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ),
+                )}
               </select>
             </div>
           </div>
-          {field("Nome do ativo", name, setName, { placeholder: "Petrobras PN", required: true })}
+          {field("Nome do ativo", name, setName, {
+            placeholder: "Petrobras PN",
+            required: true,
+          })}
           <div className="grid grid-cols-2 gap-3">
-            {field("Quantidade", quantity, setQuantity, { type: "number", placeholder: "100" })}
-            {field("Preço médio (R$)", avgPrice, setAvgPrice, { type: "number", placeholder: "28.50" })}
+            {field("Quantidade", quantity, setQuantity, {
+              type: "number",
+              placeholder: "100",
+            })}
+            {field("Preço médio (R$)", avgPrice, setAvgPrice, {
+              type: "number",
+              placeholder: "28.50",
+            })}
           </div>
-          {field("Total aportado (R$)", contributions, setContributions, { type: "number", placeholder: "0", required: false })}
+          {field("Total aportado (R$)", contributions, setContributions, {
+            type: "number",
+            placeholder: "0",
+            required: false,
+          })}
 
           {error && <p className="text-xs text-red-400 text-center">{error}</p>}
 
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={onClose}
-              className="flex-1 py-2.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition text-sm">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition text-sm"
+            >
               Cancelar
             </button>
-            <button type="submit" disabled={saving}
-              className="flex-1 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-semibold transition text-sm">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-semibold transition text-sm"
+            >
               {saving ? "Salvando..." : initial ? "Salvar" : "Adicionar"}
             </button>
           </div>
@@ -174,21 +270,36 @@ function QuoteStrip({ quotes }: { quotes: Record<string, Quote> }) {
   return (
     <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl overflow-hidden">
       <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-[var(--text-primary)]">Cotações da carteira</h2>
-        <span className="text-xs text-[var(--text-muted)]">Atualizado agora</span>
+        <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+          Cotações da carteira
+        </h2>
+        <span className="text-xs text-[var(--text-muted)]">
+          Atualizado agora
+        </span>
       </div>
       <div className="overflow-x-auto">
         <div className="flex gap-0 min-w-max">
           {items.map((q) => (
-            <div key={q.ticker} className="px-5 py-3 border-r border-[var(--border)] last:border-r-0 min-w-[130px]">
+            <div
+              key={q.ticker}
+              className="px-5 py-3 border-r border-[var(--border)] last:border-r-0 min-w-[130px]"
+            >
               <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="text-sm font-bold text-[var(--text-primary)]">{q.ticker}</span>
-                <span className={`text-xs font-medium ${q.changePct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                <span className="text-sm font-bold text-[var(--text-primary)]">
+                  {q.ticker}
+                </span>
+                <span
+                  className={`text-xs font-medium ${q.changePct >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                >
                   {fmtPct(q.changePct)}
                 </span>
               </div>
-              <p className="text-base font-semibold text-[var(--text-primary)]">{fmt(q.price)}</p>
-              <p className={`text-xs ${q.change >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+              <p className="text-base font-semibold text-[var(--text-primary)]">
+                {fmt(q.price)}
+              </p>
+              <p
+                className={`text-xs ${q.change >= 0 ? "text-emerald-400" : "text-red-400"}`}
+              >
                 {q.change >= 0 ? "▲" : "▼"} {fmt(Math.abs(q.change))}
               </p>
             </div>
@@ -206,7 +317,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [editingAsset, setEditingAsset] = useState<PortfolioAsset | undefined>();
+  const [editingAsset, setEditingAsset] = useState<
+    PortfolioAsset | undefined
+  >();
   const [activeType, setActiveType] = useState<AssetType | "todos">("todos");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -228,7 +341,9 @@ export default function Home() {
     setQuotesLoading(false);
   }, []);
 
-  useEffect(() => { loadAssets(); }, [loadAssets]);
+  useEffect(() => {
+    loadAssets();
+  }, [loadAssets]);
 
   useEffect(() => {
     const tickers = assets.map((a) => a.ticker);
@@ -243,22 +358,44 @@ export default function Home() {
     const invested = a.avgPrice * a.quantity;
     const profitLoss = currentValue - invested;
     const profitLossPct = invested > 0 ? (profitLoss / invested) * 100 : 0;
-    return { ...a, currentPrice: q.price, currentValue, profitLoss, profitLossPct };
+    return {
+      ...a,
+      currentPrice: q.price,
+      currentValue,
+      profitLoss,
+      profitLossPct,
+    };
   });
 
-  const filtered = activeType === "todos" ? enrichedAssets : enrichedAssets.filter((a) => a.type === activeType);
+  const filtered =
+    activeType === "todos"
+      ? enrichedAssets
+      : enrichedAssets.filter((a) => a.type === activeType);
 
-  const totalInvested = enrichedAssets.reduce((s, a) => s + a.avgPrice * a.quantity, 0);
-  const totalCurrent = enrichedAssets.reduce((s, a) => s + (a.currentValue ?? a.avgPrice * a.quantity), 0);
+  const totalInvested = enrichedAssets.reduce(
+    (s, a) => s + a.avgPrice * a.quantity,
+    0,
+  );
+  const totalCurrent = enrichedAssets.reduce(
+    (s, a) => s + (a.currentValue ?? a.avgPrice * a.quantity),
+    0,
+  );
   const totalPL = totalCurrent - totalInvested;
-  const totalContrib = enrichedAssets.reduce((s, a) => s + (a.contributions ?? 0), 0);
+  const totalContrib = enrichedAssets.reduce(
+    (s, a) => s + (a.contributions ?? 0),
+    0,
+  );
 
-  const handleAdd = async (data: Parameters<typeof portfolioService.add>[0]) => {
+  const handleAdd = async (
+    data: Parameters<typeof portfolioService.add>[0],
+  ) => {
     await portfolioService.add(data);
     await loadAssets();
   };
 
-  const handleUpdate = async (data: Parameters<typeof portfolioService.add>[0]) => {
+  const handleUpdate = async (
+    data: Parameters<typeof portfolioService.add>[0],
+  ) => {
     if (!editingAsset) return;
     await portfolioService.update(editingAsset.id, data);
     await loadAssets();
@@ -271,7 +408,13 @@ export default function Home() {
   };
 
   const typeGroups = Object.keys(ASSET_LABELS) as AssetType[];
-  const counts = typeGroups.reduce((acc, t) => ({ ...acc, [t]: enrichedAssets.filter((a) => a.type === t).length }), {} as Record<AssetType, number>);
+  const counts = typeGroups.reduce(
+    (acc, t) => ({
+      ...acc,
+      [t]: enrichedAssets.filter((a) => a.type === t).length,
+    }),
+    {} as Record<AssetType, number>,
+  );
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
@@ -281,9 +424,14 @@ export default function Home() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-[var(--text-primary)]">Carteira</h1>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">
+            Carteira
+          </h1>
           <button
-            onClick={() => { setEditingAsset(undefined); setShowModal(true); }}
+            onClick={() => {
+              setEditingAsset(undefined);
+              setShowModal(true);
+            }}
             className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm px-4 py-2 rounded-lg transition"
           >
             <Plus size={16} /> Adicionar ativo
@@ -293,18 +441,50 @@ export default function Home() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Total investido", value: fmt(totalInvested), icon: DollarSign, color: "bg-blue-500/20 text-blue-400" },
-            { label: "Valor atual", value: fmt(totalCurrent), icon: BarChart2, color: "bg-emerald-500/20 text-emerald-400" },
-            { label: "Lucro/Prejuízo", value: fmt(totalPL), icon: totalPL >= 0 ? TrendingUp : TrendingDown, color: totalPL >= 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400" },
-            { label: "Total aportado", value: fmt(totalContrib), icon: Landmark, color: "bg-purple-500/20 text-purple-400" },
+            {
+              label: "Total investido",
+              value: fmt(totalInvested),
+              icon: DollarSign,
+              color: "bg-blue-500/20 text-blue-400",
+            },
+            {
+              label: "Valor atual",
+              value: fmt(totalCurrent),
+              icon: BarChart2,
+              color: "bg-emerald-500/20 text-emerald-400",
+            },
+            {
+              label: "Lucro/Prejuízo",
+              value: fmt(totalPL),
+              icon: totalPL >= 0 ? TrendingUp : TrendingDown,
+              color:
+                totalPL >= 0
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "bg-red-500/20 text-red-400",
+            },
+            {
+              label: "Total aportado",
+              value: fmt(totalContrib),
+              icon: Landmark,
+              color: "bg-purple-500/20 text-purple-400",
+            },
           ].map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4 flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
+            <div
+              key={label}
+              className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4 flex items-center gap-3"
+            >
+              <div
+                className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${color}`}
+              >
                 <Icon size={18} />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-[var(--text-muted)] truncate">{label}</p>
-                <p className="text-base font-bold text-[var(--text-primary)] truncate">{value}</p>
+                <p className="text-xs text-[var(--text-muted)] truncate">
+                  {label}
+                </p>
+                <p className="text-base font-bold text-[var(--text-primary)] truncate">
+                  {value}
+                </p>
               </div>
             </div>
           ))}
@@ -314,13 +494,19 @@ export default function Home() {
         {Object.keys(quotes).length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-semibold text-[var(--text-secondary)]">Cotações em tempo real</h2>
+              <h2 className="text-sm font-semibold text-[var(--text-secondary)]">
+                Cotações em tempo real
+              </h2>
               <button
                 onClick={() => loadQuotes(assets.map((a) => a.ticker))}
                 disabled={quotesLoading}
                 className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
               >
-                <RefreshCw size={12} className={quotesLoading ? "animate-spin" : ""} /> Atualizar
+                <RefreshCw
+                  size={12}
+                  className={quotesLoading ? "animate-spin" : ""}
+                />{" "}
+                Atualizar
               </button>
             </div>
             <QuoteStrip quotes={quotes} />
@@ -335,18 +521,20 @@ export default function Home() {
           >
             Todos ({enrichedAssets.length})
           </button>
-          {typeGroups.filter((t) => counts[t] > 0).map((t) => {
-            const Icon = ASSET_ICONS[t];
-            return (
-              <button
-                key={t}
-                onClick={() => setActiveType(t)}
-                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${activeType === t ? `${ASSET_COLORS[t]} border-current` : "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
-              >
-                <Icon size={11} /> {ASSET_LABELS[t]} ({counts[t]})
-              </button>
-            );
-          })}
+          {typeGroups
+            .filter((t) => counts[t] > 0)
+            .map((t) => {
+              const Icon = ASSET_ICONS[t];
+              return (
+                <button
+                  key={t}
+                  onClick={() => setActiveType(t)}
+                  className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${activeType === t ? `${ASSET_COLORS[t]} border-current` : "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+                >
+                  <Icon size={11} /> {ASSET_LABELS[t]} ({counts[t]})
+                </button>
+              );
+            })}
         </div>
 
         {/* Tabela de ativos */}
@@ -360,7 +548,10 @@ export default function Home() {
               <BarChart2 size={36} className="mx-auto mb-3 opacity-30" />
               <p className="text-sm">Nenhum ativo nesta categoria.</p>
               <button
-                onClick={() => { setEditingAsset(undefined); setShowModal(true); }}
+                onClick={() => {
+                  setEditingAsset(undefined);
+                  setShowModal(true);
+                }}
                 className="text-emerald-400 text-sm hover:underline mt-1 inline-block"
               >
                 Adicionar primeiro ativo
@@ -389,41 +580,71 @@ export default function Home() {
                       const pl = a.profitLoss ?? 0;
                       const plPct = a.profitLossPct ?? 0;
                       return (
-                        <tr key={a.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--bg-tertiary)] transition">
+                        <tr
+                          key={a.id}
+                          className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--bg-tertiary)] transition"
+                        >
                           <td className="px-5 py-3">
                             <div>
-                              <p className="font-semibold text-[var(--text-primary)]">{a.ticker}</p>
-                              <p className="text-xs text-[var(--text-muted)] truncate max-w-[160px]">{a.name}</p>
+                              <p className="font-semibold text-[var(--text-primary)]">
+                                {a.ticker}
+                              </p>
+                              <p className="text-xs text-[var(--text-muted)] truncate max-w-[160px]">
+                                {a.name}
+                              </p>
                             </div>
                           </td>
                           <td className="px-5 py-3">
-                            <span className={`text-xs px-2 py-0.5 rounded-full border ${ASSET_COLORS[a.type]}`}>
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full border ${ASSET_COLORS[a.type]}`}
+                            >
                               {ASSET_LABELS[a.type]}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right text-[var(--text-secondary)]">{a.quantity}</td>
-                          <td className="px-4 py-3 text-right text-[var(--text-secondary)]">{fmt(a.avgPrice)}</td>
+                          <td className="px-4 py-3 text-right text-[var(--text-secondary)]">
+                            {a.quantity}
+                          </td>
+                          <td className="px-4 py-3 text-right text-[var(--text-secondary)]">
+                            {fmt(a.avgPrice)}
+                          </td>
                           <td className="px-4 py-3 text-right">
                             {a.currentPrice ? (
-                              <span className="text-[var(--text-primary)] font-medium">{fmt(a.currentPrice)}</span>
-                            ) : <span className="text-[var(--text-muted)]">—</span>}
+                              <span className="text-[var(--text-primary)] font-medium">
+                                {fmt(a.currentPrice)}
+                              </span>
+                            ) : (
+                              <span className="text-[var(--text-muted)]">
+                                —
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-[var(--text-primary)]">
                             {fmt(a.currentValue ?? a.avgPrice * a.quantity)}
                           </td>
-                          <td className={`px-4 py-3 text-right font-medium ${pl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                          <td
+                            className={`px-4 py-3 text-right font-medium ${pl >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                          >
                             <div>{fmt(pl)}</div>
                             <div className="text-xs">{fmtPct(plPct)}</div>
                           </td>
-                          <td className="px-4 py-3 text-right text-[var(--text-secondary)]">{fmt(a.contributions ?? 0)}</td>
+                          <td className="px-4 py-3 text-right text-[var(--text-secondary)]">
+                            {fmt(a.contributions ?? 0)}
+                          </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1 justify-end">
-                              <button onClick={() => { setEditingAsset(a); setShowModal(true); }}
-                                className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition rounded">
+                              <button
+                                onClick={() => {
+                                  setEditingAsset(a);
+                                  setShowModal(true);
+                                }}
+                                className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition rounded"
+                              >
                                 <Pencil size={13} />
                               </button>
-                              <button onClick={() => handleDelete(a.id)}
-                                className="p-1.5 text-[var(--text-muted)] hover:text-red-400 transition rounded">
+                              <button
+                                onClick={() => handleDelete(a.id)}
+                                className="p-1.5 text-[var(--text-muted)] hover:text-red-400 transition rounded"
+                              >
                                 <Trash2 size={13} />
                               </button>
                             </div>
@@ -443,22 +664,42 @@ export default function Home() {
                   const isExpanded = expandedId === a.id;
                   return (
                     <div key={a.id} className="p-4">
-                      <div className="flex items-center justify-between" onClick={() => setExpandedId(isExpanded ? null : a.id)}>
+                      <div
+                        className="flex items-center justify-between"
+                        onClick={() => setExpandedId(isExpanded ? null : a.id)}
+                      >
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold ${ASSET_COLORS[a.type]}`}>
+                          <div
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold ${ASSET_COLORS[a.type]}`}
+                          >
                             {a.ticker.slice(0, 3)}
                           </div>
                           <div>
-                            <p className="font-semibold text-sm text-[var(--text-primary)]">{a.ticker}</p>
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full border ${ASSET_COLORS[a.type]}`}>{ASSET_LABELS[a.type]}</span>
+                            <p className="font-semibold text-sm text-[var(--text-primary)]">
+                              {a.ticker}
+                            </p>
+                            <span
+                              className={`text-xs px-1.5 py-0.5 rounded-full border ${ASSET_COLORS[a.type]}`}
+                            >
+                              {ASSET_LABELS[a.type]}
+                            </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-right">
-                            <p className="text-sm font-bold text-[var(--text-primary)]">{fmt(a.currentValue ?? a.avgPrice * a.quantity)}</p>
-                            <p className={`text-xs ${pl >= 0 ? "text-emerald-400" : "text-red-400"}`}>{fmtPct(plPct)}</p>
+                            <p className="text-sm font-bold text-[var(--text-primary)]">
+                              {fmt(a.currentValue ?? a.avgPrice * a.quantity)}
+                            </p>
+                            <p
+                              className={`text-xs ${pl >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                            >
+                              {fmtPct(plPct)}
+                            </p>
                           </div>
-                          <ChevronDown size={16} className={`text-[var(--text-muted)] transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                          <ChevronDown
+                            size={16}
+                            className={`text-[var(--text-muted)] transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                          />
                         </div>
                       </div>
                       {isExpanded && (
@@ -466,22 +707,34 @@ export default function Home() {
                           {[
                             ["Quantidade", a.quantity],
                             ["Preço médio", fmt(a.avgPrice)],
-                            ["Cotação atual", a.currentPrice ? fmt(a.currentPrice) : "—"],
+                            [
+                              "Cotação atual",
+                              a.currentPrice ? fmt(a.currentPrice) : "—",
+                            ],
                             ["L/P", fmt(pl)],
                             ["Aportes", fmt(a.contributions ?? 0)],
                           ].map(([k, v]) => (
                             <div key={String(k)}>
                               <p className="text-[var(--text-muted)]">{k}</p>
-                              <p className="font-medium text-[var(--text-primary)]">{v}</p>
+                              <p className="font-medium text-[var(--text-primary)]">
+                                {v}
+                              </p>
                             </div>
                           ))}
                           <div className="col-span-2 flex gap-2 mt-2">
-                            <button onClick={() => { setEditingAsset(a); setShowModal(true); }}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] text-xs hover:text-[var(--text-primary)] transition">
+                            <button
+                              onClick={() => {
+                                setEditingAsset(a);
+                                setShowModal(true);
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] text-xs hover:text-[var(--text-primary)] transition"
+                            >
                               <Pencil size={12} /> Editar
                             </button>
-                            <button onClick={() => handleDelete(a.id)}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-red-500/30 text-red-400 text-xs hover:bg-red-500/10 transition">
+                            <button
+                              onClick={() => handleDelete(a.id)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-red-500/30 text-red-400 text-xs hover:bg-red-500/10 transition"
+                            >
                               <Trash2 size={12} /> Remover
                             </button>
                           </div>
@@ -498,7 +751,10 @@ export default function Home() {
 
       {showModal && (
         <AssetModal
-          onClose={() => { setShowModal(false); setEditingAsset(undefined); }}
+          onClose={() => {
+            setShowModal(false);
+            setEditingAsset(undefined);
+          }}
           onSave={editingAsset ? handleUpdate : handleAdd}
           initial={editingAsset}
         />
