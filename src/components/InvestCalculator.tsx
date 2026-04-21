@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { useFormik } from "formik";
+import { RefreshCw, Save, TrendingUp } from "lucide-react";
+import { useState } from "react";
 import * as Yup from "yup";
-import { Save, RefreshCw, TrendingUp } from "lucide-react";
-import { Input } from "./shared/Input";
 import { investmentService } from "../services/investmentService";
+import { Input } from "./shared/Input";
 
 interface CalcResult {
   principal: number;
@@ -27,15 +27,21 @@ interface Props {
     period: number,
     periodUnit: "mensal" | "anual",
     contribution: number,
-    contributionFrequency: "mensal" | "anual"
+    contributionFrequency: "mensal" | "anual",
   ) => CalcResult;
 }
 
 const schema = Yup.object({
   name: Yup.string().min(2, "Nome muito curto").required("Nome obrigatório"),
   principal: Yup.number().min(0, "Deve ser >= 0").required("Obrigatório"),
-  rate: Yup.number().positive("Deve ser positivo").max(10000, "Máx 10.000%").required("Obrigatório"),
-  period: Yup.number().integer("Deve ser inteiro").positive("Deve ser positivo").required("Obrigatório"),
+  rate: Yup.number()
+    .positive("Deve ser positivo")
+    .max(10000, "Máx 10.000%")
+    .required("Obrigatório"),
+  period: Yup.number()
+    .integer("Deve ser inteiro")
+    .positive("Deve ser positivo")
+    .required("Obrigatório"),
   periodUnit: Yup.string().oneOf(["mensal", "anual"]).required(),
   contribution: Yup.number().min(0, "Deve ser >= 0").required("Obrigatório"),
   contributionFrequency: Yup.string().oneOf(["mensal", "anual"]).required(),
@@ -72,7 +78,7 @@ export function InvestCalculator({ type, label, color, calculate }: Props) {
         Number(values.period),
         values.periodUnit,
         Number(values.contribution),
-        values.contributionFrequency
+        values.contributionFrequency,
       );
       setResult(r);
       setSaved(false);
@@ -115,14 +121,18 @@ export function InvestCalculator({ type, label, color, calculate }: Props) {
     options: { value: string; label: string }[];
   }) => (
     <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-[var(--text-secondary)]">{lbl}</label>
+      <label className="text-sm font-medium text-[var(--text-secondary)]">
+        {lbl}
+      </label>
       <select
         value={formik.values[field]}
         onChange={(e) => formik.setFieldValue(field, e.target.value)}
         className="w-full rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border)] px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500"
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
         ))}
       </select>
     </div>
@@ -130,16 +140,10 @@ export function InvestCalculator({ type, label, color, calculate }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={formik.handleSubmit} className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-6 flex flex-col gap-4">
-        <Input
-          label="Nome da simulação"
-          type="text"
-          placeholder="Ex: CDB Banco XYZ"
-          {...formik.getFieldProps("name")}
-          error={formik.errors.name}
-          touched={formik.touched.name}
-        />
-
+      <form
+        onSubmit={formik.handleSubmit}
+        className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-6 flex flex-col gap-4"
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Principal (R$)"
@@ -187,7 +191,9 @@ export function InvestCalculator({ type, label, color, calculate }: Props) {
 
         {/* Aportes */}
         <div className="border-t border-[var(--border)] pt-4">
-          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">Aportes periódicos (opcional)</p>
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">
+            Aportes periódicos (opcional)
+          </p>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Valor do aporte (R$)"
@@ -231,22 +237,34 @@ export function InvestCalculator({ type, label, color, calculate }: Props) {
         <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-6">
           <div className="flex items-center gap-2 mb-5">
             <TrendingUp size={18} className="text-emerald-400" />
-            <h3 className="font-semibold text-[var(--text-primary)]">Resultado</h3>
+            <h3 className="font-semibold text-[var(--text-primary)]">
+              Resultado
+            </h3>
           </div>
 
           {/* Main result cards */}
           <div className="grid grid-cols-3 gap-3 mb-5">
             <div className="bg-[var(--bg-tertiary)] rounded-lg p-4 text-center">
-              <p className="text-xs text-[var(--text-muted)] mb-1">Total investido</p>
-              <p className="font-bold text-[var(--text-primary)] text-sm">{fmt(result.totalInvested)}</p>
+              <p className="text-xs text-[var(--text-muted)] mb-1">
+                Total investido
+              </p>
+              <p className="font-bold text-[var(--text-primary)] text-sm">
+                {fmt(result.totalInvested)}
+              </p>
             </div>
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-center">
-              <p className="text-xs text-[var(--text-muted)] mb-1">Valor final</p>
-              <p className="font-bold text-emerald-400 text-sm">{fmt(result.finalAmount)}</p>
+              <p className="text-xs text-[var(--text-muted)] mb-1">
+                Valor final
+              </p>
+              <p className="font-bold text-emerald-400 text-sm">
+                {fmt(result.finalAmount)}
+              </p>
             </div>
             <div className="bg-[var(--bg-tertiary)] rounded-lg p-4 text-center">
               <p className="text-xs text-[var(--text-muted)] mb-1">Lucro</p>
-              <p className="font-bold text-emerald-400 text-sm">{fmt(result.profit)}</p>
+              <p className="font-bold text-emerald-400 text-sm">
+                {fmt(result.profit)}
+              </p>
             </div>
           </div>
 
@@ -254,21 +272,58 @@ export function InvestCalculator({ type, label, color, calculate }: Props) {
           {result.totalInvested > 0 && (
             <div className="mb-5">
               <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1.5">
-                <span>Principal: {fmtPct(result.principal, result.finalAmount)}</span>
-                {result.contribution > 0 && <span>Aportes: {fmtPct(result.contribution * (result.periodUnit === "anual" ? result.period * 12 : result.period), result.finalAmount)}</span>}
+                <span>
+                  Principal: {fmtPct(result.principal, result.finalAmount)}
+                </span>
+                {result.contribution > 0 && (
+                  <span>
+                    Aportes:{" "}
+                    {fmtPct(
+                      result.contribution *
+                        (result.periodUnit === "anual"
+                          ? result.period * 12
+                          : result.period),
+                      result.finalAmount,
+                    )}
+                  </span>
+                )}
                 <span>Juros: {fmtPct(result.profit, result.finalAmount)}</span>
               </div>
               <div className="h-3 rounded-full overflow-hidden flex gap-0.5 bg-[var(--bg-tertiary)]">
-                <div className="bg-blue-500 h-full rounded-l-full" style={{ width: fmtPct(result.principal, result.finalAmount) }} />
+                <div
+                  className="bg-blue-500 h-full rounded-l-full"
+                  style={{
+                    width: fmtPct(result.principal, result.finalAmount),
+                  }}
+                />
                 {result.contribution > 0 && (
-                  <div className="bg-purple-500 h-full" style={{ width: fmtPct(result.totalInvested - result.principal, result.finalAmount) }} />
+                  <div
+                    className="bg-purple-500 h-full"
+                    style={{
+                      width: fmtPct(
+                        result.totalInvested - result.principal,
+                        result.finalAmount,
+                      ),
+                    }}
+                  />
                 )}
                 <div className="bg-emerald-500 h-full rounded-r-full flex-1" />
               </div>
               <div className="flex gap-4 mt-2 text-xs text-[var(--text-muted)]">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />Principal</span>
-                {result.contribution > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />Aportes</span>}
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Juros</span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                  Principal
+                </span>
+                {result.contribution > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />
+                    Aportes
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                  Juros
+                </span>
               </div>
             </div>
           )}
@@ -276,12 +331,29 @@ export function InvestCalculator({ type, label, color, calculate }: Props) {
           {/* Summary row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-5">
             {[
-              ["Taxa", `${result.rate}% ${result.periodUnit === "anual" ? "a.a." : "a.m."}`],
-              ["Período", `${result.period} ${result.periodUnit === "anual" ? "ano(s)" : "mês(es)"}`],
-              ["Aporte", result.contribution > 0 ? `${fmt(result.contribution)} / ${result.contributionFrequency === "anual" ? "ano" : "mês"}` : "—"],
-              ["Rentabilidade", `+${((result.profit / Math.max(result.totalInvested, 1)) * 100).toFixed(2)}%`],
+              [
+                "Taxa",
+                `${result.rate}% ${result.periodUnit === "anual" ? "a.a." : "a.m."}`,
+              ],
+              [
+                "Período",
+                `${result.period} ${result.periodUnit === "anual" ? "ano(s)" : "mês(es)"}`,
+              ],
+              [
+                "Aporte",
+                result.contribution > 0
+                  ? `${fmt(result.contribution)} / ${result.contributionFrequency === "anual" ? "ano" : "mês"}`
+                  : "—",
+              ],
+              [
+                "Rentabilidade",
+                `+${((result.profit / Math.max(result.totalInvested, 1)) * 100).toFixed(2)}%`,
+              ],
             ].map(([k, v]) => (
-              <div key={String(k)} className="bg-[var(--bg-tertiary)] rounded-lg p-3">
+              <div
+                key={String(k)}
+                className="bg-[var(--bg-tertiary)] rounded-lg p-3"
+              >
                 <p className="text-[var(--text-muted)] mb-0.5">{k}</p>
                 <p className="font-semibold text-[var(--text-primary)]">{v}</p>
               </div>

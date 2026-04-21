@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { NavBar } from "../components/NavBar";
+import { Link } from "react-router-dom";
 import { InvestCalculator } from "../components/InvestCalculator";
+import { NavBar } from "../components/NavBar";
 
 function calcSimple(
   principal: number,
@@ -9,17 +9,17 @@ function calcSimple(
   period: number,
   periodUnit: "mensal" | "anual",
   contribution: number,
-  contributionFrequency: "mensal" | "anual"
+  contributionFrequency: "mensal" | "anual",
 ) {
   const months = periodUnit === "anual" ? period * 12 : period;
   const monthlyRate = periodUnit === "anual" ? rate / 100 / 12 : rate / 100;
-  const monthlyContrib = contributionFrequency === "anual" ? contribution / 12 : contribution;
+  const monthlyContrib =
+    contributionFrequency === "anual" ? contribution / 12 : contribution;
 
-  // Simple interest on principal
   const principalFinal = principal * (1 + monthlyRate * months);
-  // Simple interest on contributions (avg half the period)
   const totalContribs = monthlyContrib * months;
-  const contribInterest = monthlyContrib * months * (monthlyRate * months) / 2;
+  const contribInterest =
+    (monthlyContrib * months * (monthlyRate * months)) / 2;
   const finalAmount = principalFinal + totalContribs + contribInterest;
   const totalInvested = principal + totalContribs;
 
@@ -41,12 +41,20 @@ export default function SimpleJ() {
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <NavBar />
       <main className="max-w-2xl mx-auto px-4 py-8">
-        <Link to="/juros-simples" className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm mb-6 transition">
+        <Link
+          to="/Profile"
+          className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm mb-6 transition"
+        >
           <ArrowLeft size={16} /> Voltar
         </Link>
-        <h1 className="text-xl font-bold mb-1 text-[var(--text-primary)]">Juros Simples</h1>
+        <h1 className="text-xl font-bold mb-1 text-[var(--text-primary)]">
+          Juros Simples
+        </h1>
         <p className="text-[var(--text-secondary)] text-sm mb-6">
-          Fórmula: <span className="font-mono text-[var(--text-primary)]">M = P × (1 + r × t)</span>
+          Fórmula:{" "}
+          <span className="font-mono text-[var(--text-primary)]">
+            M = P × (1 + r × t)
+          </span>
         </p>
         <InvestCalculator
           type="simples"
