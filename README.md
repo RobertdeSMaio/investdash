@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-
 # InvestDash — Frontend
 
 React + Vite + TypeScript + TailwindCSS v4
@@ -10,12 +8,6 @@ React + Vite + TypeScript + TailwindCSS v4
 npm install
 cp .env.example .env
 npm run dev
-```
-
-## .env
-
-```
-VITE_API_URL=https://seu-backend.vercel.app/api
 ```
 
 ## Funcionalidades
