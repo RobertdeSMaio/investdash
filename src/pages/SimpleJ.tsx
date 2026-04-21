@@ -8,27 +8,21 @@ function calcSimple(
   rate: number,
   period: number,
   periodUnit: "mensal" | "anual",
-  contribution: number,
+  _contribution: number,
   contributionFrequency: "mensal" | "anual",
 ) {
   const months = periodUnit === "anual" ? period * 12 : period;
   const monthlyRate = periodUnit === "anual" ? rate / 100 / 12 : rate / 100;
-  const monthlyContrib =
-    contributionFrequency === "anual" ? contribution / 12 : contribution;
 
-  const principalFinal = principal * (1 + monthlyRate * months);
-  const totalContribs = monthlyContrib * months;
-  const contribInterest =
-    (monthlyContrib * months * (monthlyRate * months)) / 2;
-  const finalAmount = principalFinal + totalContribs + contribInterest;
-  const totalInvested = principal + totalContribs;
+  const finalAmount = principal * (1 + monthlyRate * months);
+  const totalInvested = principal;
 
   return {
     principal,
     rate,
     period,
     periodUnit,
-    contribution,
+    contribution: 0,
     contributionFrequency,
     finalAmount: Math.round(finalAmount * 100) / 100,
     totalInvested: Math.round(totalInvested * 100) / 100,
@@ -99,6 +93,7 @@ export default function SimpleJ() {
           calculate={calcSimple}
           calculateOther={calcCompound}
           otherLabel="Juros Compostos"
+          showContributions={false}
         />
       </main>
     </div>

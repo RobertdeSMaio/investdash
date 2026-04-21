@@ -14,6 +14,7 @@ import {
   BarChart2,
   GitCompare,
   RefreshCw,
+  Save,
   Table2,
   TrendingUp,
 } from "lucide-react";
@@ -57,6 +58,7 @@ interface Props {
   type: "simples" | "composta";
   label: string;
   color: string;
+  showContributions?: boolean;
   calculate: (
     principal: number,
     rate: number,
@@ -174,6 +176,7 @@ export function InvestCalculator({
   calculate,
   calculateOther,
   otherLabel,
+  showContributions = true,
 }: Props) {
   const [result, setResult] = useState<CalcResult | null>(null);
   const [rows, setRows] = useState<MonthRow[]>([]);
@@ -455,31 +458,33 @@ export function InvestCalculator({
           />
         </div>
 
-        <div className="border-t border-[var(--border)] pt-4">
-          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">
-            Aportes periódicos (opcional)
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Valor do aporte (R$)"
-              type="number"
-              placeholder="500"
-              min="0"
-              step="0.01"
-              {...formik.getFieldProps("contribution")}
-              error={formik.errors.contribution}
-              touched={formik.touched.contribution}
-            />
-            <SelectField
-              label="Frequência"
-              field="contributionFrequency"
-              options={[
-                { value: "mensal", label: "Mensal" },
-                { value: "anual", label: "Anual" },
-              ]}
-            />
+        {showContributions && (
+          <div className="border-t border-[var(--border)] pt-4">
+            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">
+              Aportes periódicos (opcional)
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Valor do aporte (R$)"
+                type="number"
+                placeholder="500"
+                min="0"
+                step="0.01"
+                {...formik.getFieldProps("contribution")}
+                error={formik.errors.contribution}
+                touched={formik.touched.contribution}
+              />
+              <SelectField
+                label="Frequência"
+                field="contributionFrequency"
+                options={[
+                  { value: "mensal", label: "Mensal" },
+                  { value: "anual", label: "Anual" },
+                ]}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex gap-3 pt-1">
           <button
@@ -596,12 +601,16 @@ export function InvestCalculator({
                 "Período",
                 `${result.period} ${result.periodUnit === "anual" ? "ano(s)" : "mês(es)"}`,
               ],
-              [
-                "Aporte",
-                result.contribution > 0
-                  ? `${fmt(result.contribution)} / ${result.contributionFrequency === "anual" ? "ano" : "mês"}`
-                  : "—",
-              ],
+              ...(showContributions
+                ? [
+                    [
+                      "Aporte",
+                      result.contribution > 0
+                        ? `${fmt(result.contribution)} / ${result.contributionFrequency === "anual" ? "ano" : "mês"}`
+                        : "—",
+                    ],
+                  ]
+                : []),
               [
                 "Rentabilidade",
                 `+${((result.profit / Math.max(result.totalInvested, 1)) * 100).toFixed(2)}%`,
@@ -877,6 +886,25 @@ export function InvestCalculator({
                 </div>
               );
             })()}
+
+          {/* Save */}
+          <div className="pt-1 border-t border-[var(--border)]">
+            {saved ? (
+              <p className="text-center text-emerald-400 text-sm">
+                ✓ Simulação salva!
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50 py-2.5 rounded-lg transition text-sm font-medium"
+              >
+                <Save size={15} />
+                {saving ? "Salvando..." : "Salvar simulação"}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
