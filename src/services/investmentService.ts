@@ -1,9 +1,9 @@
 import api from "./api";
-import type { Investment } from "../types";
+import type { Simulation } from "../types";
 
 export const investmentService = {
-  async getAll(): Promise<Investment[]> {
-    const res = await api.get("/investments");
+  async getAll(): Promise<Simulation[]> {
+    const res = await api.get("/simulations");
     return res.data;
   },
 
@@ -13,12 +13,15 @@ export const investmentService = {
     principal: number;
     rate: number;
     period: number;
-  }): Promise<Investment> {
-    const res = await api.post("/investments", data);
+    periodUnit: string;
+    contribution: number;
+    contributionFrequency: string;
+  }): Promise<Simulation> {
+    const res = await api.post("/simulations", data);
     return res.data;
   },
 
   async remove(id: string): Promise<void> {
-    await api.delete(`/investments/${id}`);
+    await api.delete(`/simulations/${id}`);
   },
 };

@@ -1,24 +1,52 @@
-import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { NavBar } from "../components/NavBar";
 import { InvestCalculator } from "../components/InvestCalculator";
 
-function calcSimple(principal: number, rate: number, period: number) {
-  const profit = principal * (rate / 100) * period;
-  return { principal, rate, period, finalAmount: principal + profit, profit };
+function calcSimple(
+  principal: number,
+  rate: number,
+  period: number,
+  periodUnit: "mensal" | "anual",
+  contribution: number,
+  contributionFrequency: "mensal" | "anual"
+) {
+  const months = periodUnit === "anual" ? period * 12 : period;
+  const monthlyRate = periodUnit === "anual" ? rate / 100 / 12 : rate / 100;
+  const monthlyContrib = contributionFrequency === "anual" ? contribution / 12 : contribution;
+
+  // Simple interest on principal
+  const principalFinal = principal * (1 + monthlyRate * months);
+  // Simple interest on contributions (avg half the period)
+  const totalContribs = monthlyContrib * months;
+  const contribInterest = monthlyContrib * months * (monthlyRate * months) / 2;
+  const finalAmount = principalFinal + totalContribs + contribInterest;
+  const totalInvested = principal + totalContribs;
+
+  return {
+    principal,
+    rate,
+    period,
+    periodUnit,
+    contribution,
+    contributionFrequency,
+    finalAmount: Math.round(finalAmount * 100) / 100,
+    totalInvested: Math.round(totalInvested * 100) / 100,
+    profit: Math.round((finalAmount - totalInvested) * 100) / 100,
+  };
 }
 
 export default function SimpleJ() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       <NavBar />
       <main className="max-w-2xl mx-auto px-4 py-8">
-        <Link to="/invest" className="flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-6">
+        <Link to="/juros-simples" className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm mb-6 transition">
           <ArrowLeft size={16} /> Voltar
         </Link>
-        <h1 className="text-xl font-bold mb-1">Juros Simples</h1>
-        <p className="text-gray-400 text-sm mb-6">
-          Fórmula: <span className="font-mono text-gray-300">M = P × (1 + r × t)</span>
+        <h1 className="text-xl font-bold mb-1 text-[var(--text-primary)]">Juros Simples</h1>
+        <p className="text-[var(--text-secondary)] text-sm mb-6">
+          Fórmula: <span className="font-mono text-[var(--text-primary)]">M = P × (1 + r × t)</span>
         </p>
         <InvestCalculator
           type="simples"
