@@ -14,7 +14,6 @@ import {
   BarChart2,
   GitCompare,
   RefreshCw,
-  Save,
   Table2,
   TrendingUp,
 } from "lucide-react";
@@ -888,25 +887,6 @@ export function InvestCalculator({
                 </div>
               );
             })()}
-
-          {/* Save */}
-          <div className="pt-1 border-t border-[var(--border)]">
-            {saved ? (
-              <p className="text-center text-emerald-400 text-sm">
-                ✓ Simulação salva!
-              </p>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full flex items-center justify-center gap-2 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50 py-2.5 rounded-lg transition text-sm font-medium"
-              >
-                <Save size={15} />
-                {saving ? "Salvando..." : "Salvar simulação"}
-              </button>
-            )}
-          </div>
         </div>
       )}
     </div>
