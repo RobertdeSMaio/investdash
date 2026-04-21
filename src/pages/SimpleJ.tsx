@@ -42,7 +42,7 @@ export default function SimpleJ() {
       <NavBar />
       <main className="max-w-2xl mx-auto px-4 py-8">
         <Link
-          to="/Profile"
+          to="/"
           className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm mb-6 transition"
         >
           <ArrowLeft size={16} /> Voltar
