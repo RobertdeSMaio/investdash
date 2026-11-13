@@ -14,7 +14,8 @@ export default function ForgotPassword() {
     validationSchema: forgotPasswordSchema,
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        await authService.forgotPassword(values);
+        await authService.forgotPassword({ email: values.email.trim() });
+      } catch {
       } finally {
         setSent(true);
         setSubmitting(false);

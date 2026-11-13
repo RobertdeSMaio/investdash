@@ -25,9 +25,9 @@ export const authService = {
     token: string,
     email: string,
   ): Promise<{ message: string }> {
-    const res = await api.get(
-      `/auth/confirm-email?token=${token}&email=${encodeURIComponent(email)}`,
-    );
+    const res = await api.get("/auth/confirm-email", {
+      params: { token, email },
+    });
     return res.data;
   },
 

@@ -19,23 +19,6 @@ export interface ForgotPasswordRequest { email: string; }
 export interface ResetPasswordRequest { token: string; email: string; newPassword: string; confirmNewPassword: string; }
 export interface UpdateProfileRequest { name: string; }
 
-export interface Simulation {
-  id: string;
-  name: string;
-  type: "simples" | "composta";
-  principal: number;
-  rate: number;
-  period: number;
-  periodUnit: "mensal" | "anual";
-  contribution: number;
-  contributionFrequency: "mensal" | "anual";
-  finalAmount: number;
-  totalInvested: number;
-  profit: number;
-  createdAt: string;
-}
-export type Investment = Simulation;
-
 export type AssetType = "acao" | "fii" | "etf" | "stock" | "renda_fixa";
 
 export interface PortfolioAsset {
@@ -54,6 +37,16 @@ export interface PortfolioAsset {
   updatedAt: string;
 }
 
+export interface AddAssetRequest {
+  ticker: string;
+  name: string;
+  type: AssetType;
+  quantity: number;
+  avgPrice: number;
+  contributions?: number;
+}
+export type UpdateAssetRequest = AddAssetRequest;
+
 export interface Quote {
   ticker: string;
   name: string;
@@ -62,6 +55,7 @@ export interface Quote {
   changePct: number;
   high: number;
   low: number;
+  currency?: string;
   updatedAt: string;
 }
 

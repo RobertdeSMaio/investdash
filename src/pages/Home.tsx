@@ -1,12 +1,8 @@
 import {
-  Banknote,
   BarChart2,
-  Building2,
   ChevronDown,
   DollarSign,
-  Globe,
   Landmark,
-  LineChart,
   Pencil,
   Plus,
   RefreshCw,
@@ -15,108 +11,37 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { NavBar } from "../components/NavBar";
 import { EmailConfirmBanner } from "../components/shared/EmailConfirmBanner";
+import { usePortfolio } from "../hooks/usePortfolio";
+import { safeErrorMessage } from "../services/api";
 import { portfolioService } from "../services/portfolioService";
-import type { AssetType, PortfolioAsset, Quote } from "../types";
+import type { AddAssetRequest, AssetType, PortfolioAsset, Quote } from "../types";
+import {
+  ASSET_BADGE as ASSET_COLORS,
+  ASSET_ICONS,
+  ASSET_LABELS,
+  ASSET_TYPES,
+  fmtBRL as fmt,
+  fmtPct,
+} from "../utils/assetMeta";
+import { assetSchema, LIMITS } from "../utils/validationSchemas";
 
-const ASSET_LABELS: Record<AssetType, string> = {
-  acao: "Ação BR",
-  fii: "FII",
-  etf: "ETF",
-  stock: "Stock EUA",
-  renda_fixa: "Renda Fixa",
-};
-
-const ASSET_COLORS: Record<AssetType, string> = {
-  acao: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  fii: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  etf: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  stock: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  renda_fixa: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-};
-
-const ASSET_ICONS: Record<AssetType, React.ElementType> = {
-  acao: LineChart,
-  fii: Building2,
-  etf: BarChart2,
-  stock: Globe,
-  renda_fixa: Banknote,
-};
-
-function fmt(n: number) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-function fmtPct(n: number) {
-  return (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
+function fmtQuote(q: Quote) {
+  return q.price.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: q.currency === "USD" ? "USD" : "BRL",
+  });
 }
 
-// Real quotes from brapi.dev (free tier, no key needed for basic quotes)
-async function fetchQuotes(tickers: string[]): Promise<Record<string, Quote>> {
-  if (!tickers.length) return {};
-
-  const result: Record<string, Quote> = {};
-
-  try {
-    const joined = tickers.join(",");
-    const url = `https://brapi.dev/api/quote/${joined}?fundamental=false`;
-    const res = await fetch(url);
-
-    if (!res.ok) throw new Error(`brapi HTTP ${res.status}`);
-
-    const json = await res.json();
-    const items: Array<{
-      symbol: string;
-      shortName?: string;
-      longName?: string;
-      regularMarketPrice?: number;
-      regularMarketChange?: number;
-      regularMarketChangePercent?: number;
-      regularMarketDayHigh?: number;
-      regularMarketDayLow?: number;
-      regularMarketTime?: string;
-    }> = json?.results ?? [];
-
-    for (const item of items) {
-      const price = item.regularMarketPrice ?? 0;
-      const change = item.regularMarketChange ?? 0;
-      const changePct = item.regularMarketChangePercent ?? 0;
-      result[item.symbol] = {
-        ticker: item.symbol,
-        name: item.shortName ?? item.longName ?? item.symbol,
-        price,
-        change,
-        changePct,
-        high: item.regularMarketDayHigh ?? price,
-        low: item.regularMarketDayLow ?? price,
-        updatedAt: item.regularMarketTime ?? new Date().toISOString(),
-      };
-    }
-  } catch (err) {
-    console.error("Erro ao buscar cotações:", err);
-    // Fallback: retorna objeto vazio para não quebrar a UI
-  }
-
-  return result;
-}
-
-// ── Add/Edit Modal ─────────────────────────────────────────────
 function AssetModal({
   onClose,
   onSave,
   initial,
 }: {
   onClose: () => void;
-  onSave: (
-    data: Partial<PortfolioAsset> & {
-      ticker: string;
-      name: string;
-      type: AssetType;
-      quantity: number;
-      avgPrice: number;
-    },
-  ) => Promise<void>;
+  onSave: (data: AddAssetRequest) => Promise<void>;
   initial?: PortfolioAsset;
 }) {
   const [ticker, setTicker] = useState(initial?.ticker ?? "");
@@ -132,25 +57,33 @@ function AssetModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ticker || !name || !quantity || !avgPrice) {
-      setError("Preencha todos os campos obrigatórios.");
+    if (saving) return;
+
+    let data: AddAssetRequest;
+    try {
+      data = (await assetSchema.validate(
+        {
+          ticker,
+          name,
+          type,
+          quantity: quantity === "" ? undefined : quantity,
+          avgPrice: avgPrice === "" ? undefined : avgPrice,
+          contributions: contributions === "" ? 0 : contributions,
+        },
+        { stripUnknown: true },
+      )) as AddAssetRequest;
+    } catch (err) {
+      setError((err as Error).message);
       return;
     }
+
     setSaving(true);
     setError("");
     try {
-      await onSave({
-        ticker: ticker.toUpperCase(),
-        name,
-        type,
-        quantity: Number(quantity),
-        avgPrice: Number(avgPrice),
-        contributions: Number(contributions),
-      });
+      await onSave(data);
       onClose();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      setError(e?.response?.data?.message ?? "Erro ao salvar.");
+      setError(safeErrorMessage(err, "Erro ao salvar."));
     } finally {
       setSaving(false);
     }
@@ -160,7 +93,7 @@ function AssetModal({
     label: string,
     value: string,
     onChange: (v: string) => void,
-    opts?: { type?: string; placeholder?: string; required?: boolean },
+    opts?: { type?: string; placeholder?: string; required?: boolean; maxLength?: number },
   ) => (
     <div className="flex flex-col gap-1">
       <label className="text-xs font-medium text-[var(--text-secondary)]">
@@ -174,6 +107,10 @@ function AssetModal({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={opts?.placeholder}
+        maxLength={opts?.maxLength}
+        min={opts?.type === "number" ? 0 : undefined}
+        step={opts?.type === "number" ? "any" : undefined}
+        autoComplete="off"
         className="w-full rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-emerald-500"
       />
     </div>
@@ -198,6 +135,7 @@ function AssetModal({
           <div className="grid grid-cols-2 gap-3">
             {field("Ticker", ticker, setTicker, {
               placeholder: "PETR4",
+              maxLength: 20,
               required: true,
             })}
             <div className="flex flex-col gap-1">
@@ -221,6 +159,7 @@ function AssetModal({
           </div>
           {field("Nome do ativo", name, setName, {
             placeholder: "Petrobras PN",
+            maxLength: LIMITS.name,
             required: true,
           })}
           <div className="grid grid-cols-2 gap-3">
@@ -263,7 +202,6 @@ function AssetModal({
   );
 }
 
-// ── Quote ticker strip ─────────────────────────────────────────
 function QuoteStrip({ quotes }: { quotes: Record<string, Quote> }) {
   const items = Object.values(quotes);
   if (!items.length) return null;
@@ -295,12 +233,12 @@ function QuoteStrip({ quotes }: { quotes: Record<string, Quote> }) {
                 </span>
               </div>
               <p className="text-base font-semibold text-[var(--text-primary)]">
-                {fmt(q.price)}
+                {fmtQuote(q)}
               </p>
               <p
                 className={`text-xs ${q.change >= 0 ? "text-emerald-400" : "text-red-400"}`}
               >
-                {q.change >= 0 ? "▲" : "▼"} {fmt(Math.abs(q.change))}
+                {q.change >= 0 ? "▲" : "▼"} {fmtQuote({ ...q, price: Math.abs(q.change) })}
               </p>
             </div>
           ))}
@@ -310,12 +248,16 @@ function QuoteStrip({ quotes }: { quotes: Record<string, Quote> }) {
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────
 export default function Home() {
-  const [assets, setAssets] = useState<PortfolioAsset[]>([]);
-  const [quotes, setQuotes] = useState<Record<string, Quote>>({});
-  const [loading, setLoading] = useState(true);
-  const [quotesLoading, setQuotesLoading] = useState(false);
+  const {
+    positions: enrichedAssets,
+    totals,
+    quotes,
+    loading,
+    quotesLoading,
+    reload: loadAssets,
+    reloadQuotes,
+  } = usePortfolio();
   const [showModal, setShowModal] = useState(false);
   const [editingAsset, setEditingAsset] = useState<
     PortfolioAsset | undefined
@@ -323,79 +265,22 @@ export default function Home() {
   const [activeType, setActiveType] = useState<AssetType | "todos">("todos");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const loadAssets = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await portfolioService.getAll();
-      setAssets(data);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadQuotes = useCallback(async (tickers: string[]) => {
-    if (!tickers.length) return;
-    setQuotesLoading(true);
-    const q = await fetchQuotes(tickers);
-    setQuotes(q);
-    setQuotesLoading(false);
-  }, []);
-
-  useEffect(() => {
-    loadAssets();
-  }, [loadAssets]);
-
-  useEffect(() => {
-    const tickers = assets.map((a) => a.ticker);
-    if (tickers.length) loadQuotes(tickers);
-  }, [assets, loadQuotes]);
-
-  // Enrich assets with current prices
-  const enrichedAssets: PortfolioAsset[] = assets.map((a) => {
-    const q = quotes[a.ticker];
-    if (!q) return a;
-    const currentValue = q.price * a.quantity;
-    const invested = a.avgPrice * a.quantity;
-    const profitLoss = currentValue - invested;
-    const profitLossPct = invested > 0 ? (profitLoss / invested) * 100 : 0;
-    return {
-      ...a,
-      currentPrice: q.price,
-      currentValue,
-      profitLoss,
-      profitLossPct,
-    };
-  });
-
   const filtered =
     activeType === "todos"
       ? enrichedAssets
       : enrichedAssets.filter((a) => a.type === activeType);
 
-  const totalInvested = enrichedAssets.reduce(
-    (s, a) => s + a.avgPrice * a.quantity,
-    0,
-  );
-  const totalCurrent = enrichedAssets.reduce(
-    (s, a) => s + (a.currentValue ?? a.avgPrice * a.quantity),
-    0,
-  );
-  const totalPL = totalCurrent - totalInvested;
-  const totalContrib = enrichedAssets.reduce(
-    (s, a) => s + (a.contributions ?? 0),
-    0,
-  );
+  const totalInvested = totals.cost;
+  const totalCurrent = totals.current;
+  const totalPL = totals.pl;
+  const totalContrib = totals.contributions;
 
-  const handleAdd = async (
-    data: Parameters<typeof portfolioService.add>[0],
-  ) => {
+  const handleAdd = async (data: AddAssetRequest) => {
     await portfolioService.add(data);
     await loadAssets();
   };
 
-  const handleUpdate = async (
-    data: Parameters<typeof portfolioService.add>[0],
-  ) => {
+  const handleUpdate = async (data: AddAssetRequest) => {
     if (!editingAsset) return;
     await portfolioService.update(editingAsset.id, data);
     await loadAssets();
@@ -404,10 +289,10 @@ export default function Home() {
   const handleDelete = async (id: string) => {
     if (!confirm("Remover este ativo da carteira?")) return;
     await portfolioService.remove(id);
-    setAssets((prev) => prev.filter((a) => a.id !== id));
+    await loadAssets();
   };
 
-  const typeGroups = Object.keys(ASSET_LABELS) as AssetType[];
+  const typeGroups = ASSET_TYPES;
   const counts = typeGroups.reduce(
     (acc, t) => ({
       ...acc,
@@ -422,7 +307,6 @@ export default function Home() {
       <main className="max-w-6xl mx-auto px-4 py-8 flex flex-col gap-6">
         <EmailConfirmBanner />
 
-        {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-[var(--text-primary)]">
             Carteira
@@ -438,7 +322,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             {
@@ -490,7 +373,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Cotações */}
         {Object.keys(quotes).length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -498,7 +380,7 @@ export default function Home() {
                 Cotações em tempo real
               </h2>
               <button
-                onClick={() => loadQuotes(assets.map((a) => a.ticker))}
+                onClick={() => reloadQuotes()}
                 disabled={quotesLoading}
                 className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
               >
@@ -513,7 +395,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Filtros por tipo */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setActiveType("todos")}
@@ -537,7 +418,6 @@ export default function Home() {
             })}
         </div>
 
-        {/* Tabela de ativos */}
         <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl overflow-hidden">
           {loading ? (
             <div className="flex justify-center py-14">
@@ -559,7 +439,6 @@ export default function Home() {
             </div>
           ) : (
             <>
-              {/* Desktop table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -656,7 +535,6 @@ export default function Home() {
                 </table>
               </div>
 
-              {/* Mobile cards */}
               <div className="md:hidden divide-y divide-[var(--border)]">
                 {filtered.map((a) => {
                   const pl = a.profitLoss ?? 0;

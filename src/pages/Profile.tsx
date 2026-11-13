@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useFormik } from "formik";
+import { useNavigate } from "react-router-dom";
 import { User, Lock, CheckCircle, AlertCircle } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { safeErrorMessage } from "../services/api";
 import { authService } from "../services/authService";
 import { changePasswordSchema, updateProfileSchema } from "../utils/validationSchemas";
 import { Input } from "../components/shared/Input";
@@ -18,7 +20,8 @@ function Alert({ type, message }: { type: "success" | "error"; message: string }
 }
 
 export default function Profile() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [pwMsg, setPwMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -29,7 +32,7 @@ export default function Profile() {
     onSubmit: async (values, { setSubmitting }) => {
       setProfileMsg(null);
       try {
-        await authService.updateProfile(values);
+        await authService.updateProfile({ name: values.name.trim() });
         await refreshUser();
         setProfileMsg({ type: "success", text: "Nome atualizado com sucesso!" });
       } catch {
@@ -47,11 +50,17 @@ export default function Profile() {
       setPwMsg(null);
       try {
         await authService.changePassword(values);
-        setPwMsg({ type: "success", text: "Senha alterada com sucesso!" });
         resetForm();
+        // O backend revoga todas as sessões ao trocar a senha: encerra a atual
+        // já e pede um novo login, em vez de expirar silenciosamente depois.
+        navigate("/login", {
+          replace: true,
+          state: { notice: "Senha alterada com sucesso! Entre novamente com a nova senha." },
+        });
+        await logout();
+        return;
       } catch (err: unknown) {
-        const e = err as { response?: { data?: { message?: string } } };
-        setPwMsg({ type: "error", text: e?.response?.data?.message ?? "Senha atual incorreta." });
+        setPwMsg({ type: "error", text: safeErrorMessage(err, "Senha atual incorreta.") });
       } finally {
         setSubmitting(false);
       }
@@ -59,19 +68,19 @@ export default function Profile() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
       <NavBar />
       <main className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-6">
         <EmailConfirmBanner />
 
-        <section className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <section className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 bg-emerald-500/20 rounded-lg flex items-center justify-center">
               <User className="text-emerald-400" size={18} />
             </div>
             <div>
-              <h2 className="font-semibold text-white">Informações do perfil</h2>
-              <p className="text-xs text-gray-400">{user?.email}</p>
+              <h2 className="font-semibold text-[var(--text-primary)]">Informações do perfil</h2>
+              <p className="text-xs text-[var(--text-secondary)]">{user?.email}</p>
             </div>
           </div>
 
@@ -86,8 +95,8 @@ export default function Profile() {
             />
             <div className="flex items-center gap-3">
               <div className="flex-1">
-                <label className="text-sm font-medium text-gray-300 block mb-1">E-mail</label>
-                <p className="w-full rounded-lg bg-gray-800/50 border border-gray-700 px-4 py-2.5 text-gray-400 text-sm">
+                <label className="text-sm font-medium text-[var(--text-secondary)] block mb-1">E-mail</label>
+                <p className="w-full rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border)] px-4 py-2.5 text-[var(--text-muted)] text-sm">
                   {user?.email}
                 </p>
               </div>
@@ -107,14 +116,14 @@ export default function Profile() {
           </form>
         </section>
 
-        <section className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <section className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 bg-blue-500/20 rounded-lg flex items-center justify-center">
               <Lock className="text-blue-400" size={18} />
             </div>
             <div>
-              <h2 className="font-semibold text-white">Alterar senha</h2>
-              <p className="text-xs text-gray-400">Mantenha sua conta segura</p>
+              <h2 className="font-semibold text-[var(--text-primary)]">Alterar senha</h2>
+              <p className="text-xs text-[var(--text-secondary)]">Mantenha sua conta segura</p>
             </div>
           </div>
 
@@ -152,8 +161,8 @@ export default function Profile() {
           </form>
         </section>
 
-        <section className="bg-gray-900 rounded-xl border border-gray-800 p-6">
-          <p className="text-xs text-gray-500">
+        <section className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] p-6">
+          <p className="text-xs text-[var(--text-muted)]">
             Conta criada em {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("pt-BR") : "—"}
           </p>
         </section>

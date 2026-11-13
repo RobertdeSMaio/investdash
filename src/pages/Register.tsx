@@ -2,6 +2,7 @@ import { useFormik } from "formik";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { TrendingUp, CheckCircle } from "lucide-react";
+import { safeErrorMessage } from "../services/api";
 import { authService } from "../services/authService";
 import { registerSchema } from "../utils/validationSchemas";
 import { Input } from "../components/shared/Input";
@@ -15,11 +16,14 @@ export default function Register() {
     validationSchema: registerSchema,
     onSubmit: async (values, { setSubmitting, setFieldError }) => {
       try {
-        await authService.register(values);
+        await authService.register({
+          ...values,
+          name: values.name.trim(),
+          email: values.email.trim(),
+        });
         setSuccess(true);
       } catch (err: unknown) {
-        const e = err as { response?: { data?: { message?: string } } };
-        setFieldError("email", e?.response?.data?.message ?? "Erro ao cadastrar.");
+        setFieldError("email", safeErrorMessage(err, "Erro ao cadastrar."));
       } finally {
         setSubmitting(false);
       }
