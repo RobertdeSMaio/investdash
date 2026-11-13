@@ -1,6 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import type { User } from "../types";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { authService } from "../services/authService";
+import { SESSION_EXPIRED_EVENT, tokenStorage } from "../services/tokenStorage";
+import type { User } from "../types";
+
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+const ACTIVITY_EVENTS = ["mousedown", "keydown", "touchstart", "scroll"] as const;
 
 interface AuthContextValue {
   user: User | null;
@@ -18,41 +22,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const profile = await authService.getProfile();
-      setUser(profile);
+      setUser(await authService.getProfile());
     } catch {
       setUser(null);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      tokenStorage.clear();
     }
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
+    if (tokenStorage.hasSession()) {
       refreshUser().finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
   }, [refreshUser]);
 
+  useEffect(() => {
+    const onExpired = () => setUser(null);
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, []);
+
   const login = async (email: string, password: string) => {
     const { user: u, tokens } = await authService.login({ email, password });
-    localStorage.setItem("accessToken", tokens.accessToken);
-    localStorage.setItem("refreshToken", tokens.refreshToken);
+    tokenStorage.set(tokens.accessToken, tokens.refreshToken);
     setUser(u);
   };
 
-  const logout = async () => {
-    const rt = localStorage.getItem("refreshToken") ?? "";
+  const logout = useCallback(async () => {
+    const rt = tokenStorage.getRefresh();
     try {
-      await authService.logout(rt);
+      if (rt) await authService.logout(rt);
+    } catch {
     } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      tokenStorage.clear();
       setUser(null);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    let last = Date.now();
+    const touch = () => {
+      last = Date.now();
+    };
+    ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, touch, { passive: true }));
+    const timer = window.setInterval(() => {
+      if (Date.now() - last > IDLE_TIMEOUT_MS) logout();
+    }, 60 * 1000);
+    return () => {
+      ACTIVITY_EVENTS.forEach((e) => window.removeEventListener(e, touch));
+      window.clearInterval(timer);
+    };
+  }, [user, logout]);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>

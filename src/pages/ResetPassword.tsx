@@ -1,38 +1,37 @@
 import { useFormik } from "formik";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { CheckCircle, AlertCircle } from "lucide-react";
+import { safeErrorMessage } from "../services/api";
 import { authService } from "../services/authService";
+import { consumeLinkParams } from "../utils/linkParams";
 import { resetPasswordSchema } from "../utils/validationSchemas";
 import { Input } from "../components/shared/Input";
 
 export default function ResetPassword() {
-  const [params] = useSearchParams();
   const navigate = useNavigate();
   const [done, setDone] = useState(false);
   const [serverError, setServerError] = useState("");
-
-  const token = params.get("token") ?? "";
-  const email = params.get("email") ?? "";
+  const [link] = useState(consumeLinkParams);
 
   const formik = useFormik({
     initialValues: { newPassword: "", confirmNewPassword: "" },
     validationSchema: resetPasswordSchema,
     onSubmit: async (values, { setSubmitting }) => {
+      if (!link) return;
       setServerError("");
       try {
-        await authService.resetPassword({ token, email, ...values });
+        await authService.resetPassword({ token: link.token, email: link.email, ...values });
         setDone(true);
       } catch (err: unknown) {
-        const e = err as { response?: { data?: { message?: string } } };
-        setServerError(e?.response?.data?.message ?? "Link inválido ou expirado.");
+        setServerError(safeErrorMessage(err, "Link inválido ou expirado."));
       } finally {
         setSubmitting(false);
       }
     },
   });
 
-  if (!token || !email) {
+  if (!link) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
         <div className="text-center flex flex-col items-center gap-3">

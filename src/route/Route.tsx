@@ -11,6 +11,9 @@ import Home from "../pages/Home";
 import Profile from "../pages/Profile";
 import SimpleJ from "../pages/SimpleJ";
 import ComposeJ from "../pages/ComposeJ";
+import Tracking from "../pages/Tracking";
+import Analysis from "../pages/Analysis";
+import Advisor from "../pages/Advisor";
 
 export function AppRoutes() {
   return (
@@ -27,9 +30,11 @@ export function AppRoutes() {
             <Route element={<PrivateRoute />}>
               <Route path="/" element={<Home />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/acompanhamento" element={<Tracking />} />
+              <Route path="/analise" element={<Analysis />} />
+              <Route path="/sugestoes" element={<Advisor />} />
               <Route path="/juros-simples" element={<SimpleJ />} />
               <Route path="/juros-compostos" element={<ComposeJ />} />
-              {/* Legacy */}
               <Route path="/invest/simples" element={<SimpleJ />} />
               <Route path="/invest/composto" element={<ComposeJ />} />
             </Route>

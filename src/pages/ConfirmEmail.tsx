@@ -1,24 +1,27 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
 import { authService } from "../services/authService";
 import { useAuth } from "../hooks/useAuth";
+import { consumeLinkParams } from "../utils/linkParams";
 
 export default function ConfirmEmail() {
-  const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [link] = useState(consumeLinkParams);
+  const started = useRef(false);
 
   useEffect(() => {
-    const token = params.get("token") ?? "";
-    const email = params.get("email") ?? "";
-    if (!token || !email) { setStatus("error"); return; }
+    if (started.current) return;
+    started.current = true;
 
-    authService.confirmEmail(token, email)
-      .then(() => { refreshUser(); setStatus("success"); })
+    if (!link) { setStatus("error"); return; }
+
+    authService.confirmEmail(link.token, link.email)
+      .then(() => { if (user) refreshUser(); setStatus("success"); })
       .catch(() => setStatus("error"));
-  }, [params, refreshUser]);
+  }, [link, user, refreshUser]);
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">

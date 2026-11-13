@@ -1,14 +1,3 @@
-import {
-  BarElement,
-  CategoryScale,
-  Chart,
-  Filler,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Tooltip,
-} from "chart.js";
 import { useFormik } from "formik";
 import {
   BarChart2,
@@ -20,60 +9,22 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import * as Yup from "yup";
-import { investmentService } from "../services/investmentService";
+import {
+  simulate,
+  summarize,
+  type CalcResult,
+  type Frequency,
+  type InterestType,
+  type MonthRow,
+} from "../utils/interest";
+import "./charts/chartTheme";
 import { Input } from "./shared/Input";
 
-Chart.register(
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
-  BarElement,
-  Tooltip,
-  Legend,
-  Filler,
-);
-
-interface CalcResult {
-  principal: number;
-  contribution: number;
-  contributionFrequency: string;
-  periodUnit: string;
-  finalAmount: number;
-  totalInvested: number;
-  profit: number;
-  rate: number;
-  period: number;
-}
-
-interface MonthRow {
-  month: number;
-  invested: number;
-  interest: number;
-  total: number;
-}
-
 interface Props {
-  type: "simples" | "composta";
+  type: InterestType;
   label: string;
   color: string;
   showContributions?: boolean;
-  calculate: (
-    principal: number,
-    rate: number,
-    period: number,
-    periodUnit: "mensal" | "anual",
-    contribution: number,
-    contributionFrequency: "mensal" | "anual",
-  ) => CalcResult;
-  calculateOther: (
-    principal: number,
-    rate: number,
-    period: number,
-    periodUnit: "mensal" | "anual",
-    contribution: number,
-    contributionFrequency: "mensal" | "anual",
-  ) => CalcResult;
   otherLabel: string;
 }
 
@@ -81,64 +32,36 @@ function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function buildRowsFromValues(
-  principal: number,
-  rate: number,
-  period: number,
-  periodUnit: "mensal" | "anual",
-  contribution: number,
-  contributionFrequency: "mensal" | "anual",
-  calcType: "simples" | "composta",
-): MonthRow[] {
-  const months = periodUnit === "anual" ? period * 12 : period;
-  const monthlyContrib =
-    contributionFrequency === "anual" ? contribution / 12 : contribution;
-
-  // Annual rate converted to monthly — each method uses its own convention:
-  // Compound: geometric equivalent  (1+r)^(1/12) - 1
-  // Simple:   linear proportional   r / 12
-  const annualRate = periodUnit === "anual" ? rate / 100 : null;
-  const monthlyRateCompound =
-    annualRate !== null ? Math.pow(1 + annualRate, 1 / 12) - 1 : rate / 100;
-  const monthlyRateSimple = annualRate !== null ? annualRate / 12 : rate / 100;
-
-  const monthlyRate =
-    calcType === "composta" ? monthlyRateCompound : monthlyRateSimple;
-
-  const rows: MonthRow[] = [];
-  for (let m = 0; m <= months; m++) {
-    let total: number;
-    if (calcType === "composta") {
-      // Compound: balance reinvests every period
-      total =
-        monthlyRate === 0
-          ? principal + monthlyContrib * m
-          : principal * Math.pow(1 + monthlyRate, m) +
-            monthlyContrib * ((Math.pow(1 + monthlyRate, m) - 1) / monthlyRate);
-    } else {
-      // Simple: interest always over original principal, no reinvestment
-      total = principal * (1 + monthlyRate * m) + monthlyContrib * m;
-    }
-    const invested = principal + monthlyContrib * m;
-    rows.push({
-      month: m,
-      invested: Math.round(invested * 100) / 100,
-      interest: Math.max(0, Math.round((total - invested) * 100) / 100),
-      total: Math.round(total * 100) / 100,
-    });
-  }
-  return rows;
-}
+const MAX_MONTHS = 1200;
+const MAX_MONEY = 1_000_000_000_000;
 
 const schema = Yup.object({
-  principal: Yup.number().min(0, "Deve ser >= 0").required("Obrigatório"),
-  rate: Yup.number()
-    .positive("Deve ser positivo")
-    .max(10000)
+  principal: Yup.number()
+    .typeError("Número inválido")
+    .min(0, "Deve ser >= 0")
+    .max(MAX_MONEY, "Valor muito alto")
     .required("Obrigatório"),
-  period: Yup.number().integer().positive().required("Obrigatório"),
+  rate: Yup.number()
+    .typeError("Número inválido")
+    .positive("Deve ser positivo")
+    .max(1000, "Máximo 1000%")
+    .required("Obrigatório"),
   periodUnit: Yup.string().oneOf(["mensal", "anual"]).required(),
-  contribution: Yup.number().min(0).required("Obrigatório"),
+  period: Yup.number()
+    .typeError("Número inválido")
+    .integer("Use um número inteiro")
+    .positive("Deve ser positivo")
+    .required("Obrigatório")
+    .when("periodUnit", ([unit], s) =>
+      unit === "anual"
+        ? s.max(MAX_MONTHS / 12, `Máximo ${MAX_MONTHS / 12} anos`)
+        : s.max(MAX_MONTHS, `Máximo ${MAX_MONTHS} meses`),
+    ),
+  contribution: Yup.number()
+    .typeError("Número inválido")
+    .min(0, "Deve ser >= 0")
+    .max(MAX_MONEY, "Valor muito alto")
+    .required("Obrigatório"),
   contributionFrequency: Yup.string().oneOf(["mensal", "anual"]).required(),
 });
 
@@ -174,16 +97,12 @@ export function InvestCalculator({
   type,
   label,
   color,
-  calculate,
-  calculateOther,
   otherLabel,
   showContributions = true,
 }: Props) {
   const [result, setResult] = useState<CalcResult | null>(null);
   const [rows, setRows] = useState<MonthRow[]>([]);
   const [otherRows, setOtherRows] = useState<MonthRow[]>([]);
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"line" | "bar" | "table" | "compare">("line");
   const [showFullTable, setShowFullTable] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -193,64 +112,40 @@ export function InvestCalculator({
       principal: "",
       rate: "",
       period: "",
-      periodUnit: "mensal" as "mensal" | "anual",
+      periodUnit: "mensal" as Frequency,
       contribution: "0",
-      contributionFrequency: "mensal" as "mensal" | "anual",
+      contributionFrequency: "mensal" as Frequency,
     },
     validationSchema: schema,
-    onSubmit: (values) => {
-      const p = Number(values.principal);
-      const r = Number(values.rate);
-      const pe = Number(values.period);
-      const pu = values.periodUnit;
-      const c = Number(values.contribution);
-      const cf = values.contributionFrequency;
+    onSubmit: (values, { setFieldError }) => {
+      const input = {
+        principal: Number(values.principal),
+        rate: Number(values.rate),
+        period: Number(values.period),
+        periodUnit: values.periodUnit,
+        contribution: showContributions ? Number(values.contribution) : 0,
+        contributionFrequency: values.contributionFrequency,
+      };
+      const myRows = simulate(type, input);
+      if (!myRows.every((r) => Number.isFinite(r.total) && r.total <= Number.MAX_SAFE_INTEGER)) {
+        setFieldError("rate", "Combinação de taxa e período gera valores grandes demais");
+        return;
+      }
 
-      const res = calculate(p, r, pe, pu, c, cf);
-      setResult(res);
-      setSaved(false);
+      setResult(summarize(input, myRows));
       setShowFullTable(false);
-      setRows(buildRowsFromValues(p, r, pe, pu, c, cf, type));
+      setRows(myRows);
       setOtherRows(
-        buildRowsFromValues(
-          p,
-          r,
-          pe,
-          pu,
-          c,
-          cf,
-          type === "composta" ? "simples" : "composta",
-        ),
+        simulate(type === "composta" ? "simples" : "composta", input),
       );
     },
   });
-
-  const handleSave = async () => {
-    if (!result) return;
-    setSaving(true);
-    try {
-      await investmentService.create({
-        name: `${label} – ${new Date().toLocaleDateString("pt-BR")}`,
-        type,
-        principal: result.principal,
-        rate: result.rate,
-        period: result.period,
-        periodUnit: result.periodUnit,
-        contribution: result.contribution,
-        contributionFrequency: result.contributionFrequency,
-      });
-      setSaved(true);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleReset = () => {
     formik.resetForm();
     setResult(null);
     setRows([]);
     setOtherRows([]);
-    setSaved(false);
     setShowFullTable(false);
   };
 
@@ -260,15 +155,11 @@ export function InvestCalculator({
     }
   }, [showFullTable]);
 
-  const SelectField = ({
-    label: lbl,
-    field,
-    options,
-  }: {
-    label: string;
-    field: "periodUnit" | "contributionFrequency";
-    options: { value: string; label: string }[];
-  }) => (
+  const selectField = (
+    lbl: string,
+    field: "periodUnit" | "contributionFrequency",
+    options: { value: string; label: string }[],
+  ) => (
     <div className="flex flex-col gap-1">
       <label className="text-sm font-medium text-[var(--text-secondary)]">
         {lbl}
@@ -410,7 +301,6 @@ export function InvestCalculator({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Form */}
       <form
         onSubmit={formik.handleSubmit}
         className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-6 flex flex-col gap-4"
@@ -449,14 +339,10 @@ export function InvestCalculator({
             error={formik.errors.period}
             touched={formik.touched.period}
           />
-          <SelectField
-            label="Unidade"
-            field="periodUnit"
-            options={[
-              { value: "mensal", label: "Meses" },
-              { value: "anual", label: "Anos" },
-            ]}
-          />
+          {selectField("Unidade", "periodUnit", [
+            { value: "mensal", label: "Meses" },
+            { value: "anual", label: "Anos" },
+          ])}
         </div>
 
         {showContributions && (
@@ -475,14 +361,10 @@ export function InvestCalculator({
                 error={formik.errors.contribution}
                 touched={formik.touched.contribution}
               />
-              <SelectField
-                label="Frequência"
-                field="contributionFrequency"
-                options={[
-                  { value: "mensal", label: "Mensal" },
-                  { value: "anual", label: "Anual" },
-                ]}
-              />
+              {selectField("Frequência", "contributionFrequency", [
+                { value: "mensal", label: "Mensal" },
+                { value: "anual", label: "Anual" },
+              ])}
             </div>
           </div>
         )}
@@ -504,7 +386,6 @@ export function InvestCalculator({
         </div>
       </form>
 
-      {/* Results */}
       {result && (
         <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-6 flex flex-col gap-5">
           <div className="flex items-center gap-2">
@@ -514,7 +395,6 @@ export function InvestCalculator({
             </h3>
           </div>
 
-          {/* Cards */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-[var(--bg-tertiary)] rounded-lg p-4 text-center">
               <p className="text-xs text-[var(--text-muted)] mb-1">
@@ -540,7 +420,6 @@ export function InvestCalculator({
             </div>
           </div>
 
-          {/* Bar breakdown */}
           {result.totalInvested > 0 &&
             (() => {
               const pP = (result.principal / result.finalAmount) * 100;
@@ -591,7 +470,6 @@ export function InvestCalculator({
               );
             })()}
 
-          {/* Pills */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
             {[
               [
@@ -627,7 +505,6 @@ export function InvestCalculator({
             ))}
           </div>
 
-          {/* Tabs */}
           <div className="flex gap-1.5 flex-wrap border-b border-[var(--border)] pb-3">
             <TabBtn
               active={tab === "line"}
@@ -655,7 +532,6 @@ export function InvestCalculator({
             />
           </div>
 
-          {/* Line chart */}
           {tab === "line" && (
             <div>
               <div className="flex gap-4 text-xs text-[var(--text-muted)] mb-3">
@@ -683,7 +559,6 @@ export function InvestCalculator({
             </div>
           )}
 
-          {/* Bar chart */}
           {tab === "bar" && (
             <div>
               <div className="flex gap-4 text-xs text-[var(--text-muted)] mb-3">
@@ -708,7 +583,6 @@ export function InvestCalculator({
             </div>
           )}
 
-          {/* Table */}
           {tab === "table" && (
             <div ref={tableRef}>
               <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
@@ -766,7 +640,6 @@ export function InvestCalculator({
             </div>
           )}
 
-          {/* Compare */}
           {tab === "compare" &&
             otherRows.length > 0 &&
             (() => {
@@ -823,10 +696,16 @@ export function InvestCalculator({
                       </div>
                     </div>
                     <p className="text-xs text-[var(--text-secondary)] text-center">
-                      <span className="font-semibold text-emerald-400">
-                        {winner}
-                      </span>{" "}
-                      gera {fmt(diff)} a mais no período
+                      {diff < 0.01 ? (
+                        "Os dois métodos geram o mesmo valor neste período"
+                      ) : (
+                        <>
+                          <span className="font-semibold text-emerald-400">
+                            {winner}
+                          </span>{" "}
+                          gera {fmt(diff)} a mais no período
+                        </>
+                      )}
                     </p>
                   </div>
 

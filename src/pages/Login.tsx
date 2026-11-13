@@ -1,7 +1,7 @@
 import { useFormik } from "formik";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { TrendingUp } from "lucide-react";
+import { CheckCircle, TrendingUp } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { loginSchema } from "../utils/validationSchemas";
 import { Input } from "../components/shared/Input";
@@ -9,19 +9,31 @@ import { Input } from "../components/shared/Input";
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [serverError, setServerError] = useState("");
+  const [notice] = useState(() => {
+    const n = (location.state as { notice?: unknown } | null)?.notice;
+    return typeof n === "string" && n.length <= 200 ? n : "";
+  });
 
   const formik = useFormik({
     initialValues: { email: "", password: "" },
     validationSchema: loginSchema,
-    onSubmit: async (values, { setSubmitting }) => {
+    onSubmit: async (values, { setSubmitting, setFieldValue }) => {
       setServerError("");
       try {
-        await login(values.email, values.password);
-        navigate("/");
+        await login(values.email.trim(), values.password);
+        navigate("/", { replace: true });
       } catch (err: unknown) {
-        const e = err as { response?: { data?: { message?: string } } };
-        setServerError(e?.response?.data?.message ?? "E-mail ou senha incorretos.");
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        setServerError(
+          status === 429
+            ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+            : status && status < 500
+              ? "E-mail ou senha incorretos."
+              : "Não foi possível entrar agora. Tente novamente.",
+        );
+        setFieldValue("password", "", false);
       } finally {
         setSubmitting(false);
       }
@@ -40,6 +52,12 @@ export default function Login() {
         </div>
 
         <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
+          {notice && !serverError && (
+            <p className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm rounded-lg px-4 py-3">
+              <CheckCircle size={16} className="shrink-0" />
+              {notice}
+            </p>
+          )}
           {serverError && (
             <p className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3">
               {serverError}
